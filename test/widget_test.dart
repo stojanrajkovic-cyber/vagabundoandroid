@@ -1,30 +1,66 @@
-// This is a basic Flutter widget test.
+// Osnovni smoke test.
 //
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
+// NAPOMENA: VagabundoApp zahtijeva Firebase.initializeApp() prije
+// runApp() (vidi main.dart), a Firebase nije dostupan u test okruženju
+// bez dodatnog mockovanja (firebase_core_platform_interface test double-a).
+// Zato ovdje NE testiramo VagabundoApp direktno — to ostavljamo za Fazu 9
+// (Testing & Release), kad dodamo Firebase mock setup.
+//
+// Za sada testiramo izolovan, Firebase-nezavisan widget (PrimaryButton)
+// da test suite bude zelen i da hvata regresije na reusable komponentama.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:vagabundo/main.dart';
+import 'package:vagabundo/widgets/primary_button.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('PrimaryButton prikazuje label i reaguje na tap',
+      (WidgetTester tester) async {
+    var tapped = false;
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: PrimaryButton(
+            label: 'Prijavi se',
+            onPressed: () => tapped = true,
+          ),
+        ),
+      ),
+    );
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
+    expect(find.text('Prijavi se'), findsOneWidget);
+    expect(tapped, isFalse);
+
+    await tester.tap(find.text('Prijavi se'));
     await tester.pump();
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(tapped, isTrue);
+  });
+
+  testWidgets('PrimaryButton prikazuje loading indikator i blokira tap',
+      (WidgetTester tester) async {
+    var tapped = false;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: PrimaryButton(
+            label: 'Prijavi se',
+            isLoading: true,
+            onPressed: () => tapped = true,
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.text('Prijavi se'), findsNothing);
+
+    await tester.tap(find.byType(PrimaryButton));
+    await tester.pump();
+
+    expect(tapped, isFalse);
   });
 }
