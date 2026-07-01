@@ -55,11 +55,9 @@ final userVisitsProvider = StreamProvider<List<VisitedCity>>((ref) {
       .orderBy('visitedAt', descending: true)
       .snapshots()
       .map((qs) {
-    final firestoreService = FirestoreService.instance;
-    // Reuse-uje isti parsing kao FirestoreService (privatna metoda tamo,
-    // pa ovdje radimo ekvivalentnu inline verziju preko fetchVisits-like
-    // pristupa — ako želiš izbjeći duplikaciju, izvezi _visitedCityFromMap
-    // kao javnu static metodu u firestore_service.dart).
+    // Napomena: parsing je duplikat _visitedCityFromMap iz FirestoreService
+    // (ta metoda je privatna tamo). Ako želiš izbjeći duplikaciju, izvezi
+    // je kao javnu static metodu u firestore_service.dart.
     return qs.docs
         .map((doc) {
           final d = doc.data();

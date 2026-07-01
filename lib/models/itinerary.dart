@@ -498,6 +498,44 @@ class RoadTripPlan {
       };
 }
 
+/// Ekvivalent ItineraryRequest tipa — sastavljen iz upotrebe u
+/// PromptBuilder.swift (nije postojao kao poseban uploadan fajl).
+/// Polja su usklađena sa onim što PromptBuilder stvarno čita
+/// (req.interests, req.tripPace, req.byCar, req.originName/Lat/Lon).
+class ItineraryRequest {
+  const ItineraryRequest({
+    required this.country,
+    required this.city,
+    required this.languageCode,
+    required this.model,
+    this.days = 3,
+    this.cityLat,
+    this.cityLon,
+    this.tripPace = TripPace.balanced,
+    this.interests = const [],
+    this.byCar = false,
+    this.originName,
+    this.originLat,
+    this.originLon,
+  });
+
+  final String country;
+  final String city;
+  final String languageCode;
+  final String model;
+  final int days;
+  final double? cityLat;
+  final double? cityLon;
+  final TripPace tripPace;
+  final List<String> interests;
+
+  /// Road trip način — kad je true, PromptBuilder dodaje car/roadTrip/origin addone.
+  final bool byCar;
+  final String? originName;
+  final double? originLat;
+  final double? originLon;
+}
+
 /// Ekvivalent ItineraryResponse (glavni model).
 class ItineraryResponse {
   ItineraryResponse({

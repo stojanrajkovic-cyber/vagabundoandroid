@@ -7,44 +7,6 @@ import '../../models/itinerary.dart';
 import 'itinerary_json_parser.dart';
 import 'prompt_builder.dart';
 
-/// Ekvivalent ItineraryRequest tipa — sastavljen iz upotrebe u
-/// PromptBuilder.swift (nije postojao kao poseban uploadan fajl).
-/// Polja su sad usklađena sa onim što PromptBuilder stvarno čita
-/// (req.interests, req.tripPace, req.byCar, req.originName/Lat/Lon).
-class ItineraryRequest {
-  const ItineraryRequest({
-    required this.country,
-    required this.city,
-    required this.languageCode,
-    required this.model,
-    this.days = 3,
-    this.cityLat,
-    this.cityLon,
-    this.tripPace = TripPace.balanced,
-    this.interests = const [],
-    this.byCar = false,
-    this.originName,
-    this.originLat,
-    this.originLon,
-  });
-
-  final String country;
-  final String city;
-  final String languageCode;
-  final String model;
-  final int days;
-  final double? cityLat;
-  final double? cityLon;
-  final TripPace tripPace;
-  final List<String> interests;
-
-  /// Road trip način — kad je true, PromptBuilder dodaje car/roadTrip/origin addone.
-  final bool byCar;
-  final String? originName;
-  final double? originLat;
-  final double? originLon;
-}
-
 /// Ekvivalent ItineraryGenerator protokola.
 abstract class ItineraryGenerator {
   Future<ItineraryResponse> generate(ItineraryRequest req);
@@ -323,9 +285,12 @@ STRICT RULES:
 
     final decoded = jsonDecode(response.body) as Map<String, dynamic>;
     final choices = decoded['choices'] as List<dynamic>?;
-    final content = choices?.isNotEmpty == true
-        ? (choices!.first as Map<String, dynamic>)['message']?['content'] as String?
-        : null;
+
+    String? content;
+    if (choices != null && choices.isNotEmpty) {
+      final message = (choices.first as Map<String, dynamic>)['message'] as Map<String, dynamic>?;
+      content = message?['content'] as String?;
+    }
 
     if (content == null || content.isEmpty) {
       throw StateError('No content from $model');
@@ -333,8 +298,4 @@ STRICT RULES:
 
     return content;
   }
-}
-
-extension _FirstOrNull<T> on Iterable<T> {
-  T? get firstOrNull => isEmpty ? null : first;
 }
