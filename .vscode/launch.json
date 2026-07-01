@@ -1,0 +1,14 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "vagabundo",
+      "request": "launch",
+      "type": "dart",
+      "toolArgs": [
+        "--dart-define=SUPABASE_URL=https://ulobdqrmwjhkjuvqmgkc.supabase.co",
+        "--dart-define=SUPABASE_ANON_KEY=sb_publishable_QY11DI0C7SfXsRyymHNLig_TF18w4rQ"
+      ]
+    }
+  ]
+}

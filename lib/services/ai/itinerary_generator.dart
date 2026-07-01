@@ -1,12 +1,16 @@
 import 'dart:async';
+import 'dart:convert';
+
+import 'package:http/http.dart' as http;
 
 import '../../models/itinerary.dart';
 import 'itinerary_json_parser.dart';
+import 'prompt_builder.dart';
 
-/// Ekvivalent ItineraryRequest tipa — NIJE bio dostupan ni u jednom
-/// uploadanom fajlu, samo korišten kao parametar u
-/// AIProxyItineraryGenerator.swift. Ovo je MINIMALNA pretpostavljena
-/// verzija — dopuni kad uploadaš pravi ItineraryRequest.swift.
+/// Ekvivalent ItineraryRequest tipa — sastavljen iz upotrebe u
+/// PromptBuilder.swift (nije postojao kao poseban uploadan fajl).
+/// Polja su sad usklađena sa onim što PromptBuilder stvarno čita
+/// (req.interests, req.tripPace, req.byCar, req.originName/Lat/Lon).
 class ItineraryRequest {
   const ItineraryRequest({
     required this.country,
@@ -14,6 +18,14 @@ class ItineraryRequest {
     required this.languageCode,
     required this.model,
     this.days = 3,
+    this.cityLat,
+    this.cityLon,
+    this.tripPace = TripPace.balanced,
+    this.interests = const [],
+    this.byCar = false,
+    this.originName,
+    this.originLat,
+    this.originLon,
   });
 
   final String country;
@@ -21,6 +33,16 @@ class ItineraryRequest {
   final String languageCode;
   final String model;
   final int days;
+  final double? cityLat;
+  final double? cityLon;
+  final TripPace tripPace;
+  final List<String> interests;
+
+  /// Road trip način — kad je true, PromptBuilder dodaje car/roadTrip/origin addone.
+  final bool byCar;
+  final String? originName;
+  final double? originLat;
+  final double? originLon;
 }
 
 /// Ekvivalent ItineraryGenerator protokola.
@@ -34,16 +56,12 @@ abstract class ItineraryGenerator {
 
 /// Ekvivalent AIProxyItineraryGenerator.swift.
 ///
-/// ⚠️ BLOKIRANO — `_buildPrompt()` i `_callAIProxy()` su placeholderi.
-/// Da bi ovo stvarno radilo, trebaju mi:
-///   1. PromptBuilder.swift — gradi system/user prompt tekst i JSON schema
-///      (PromptBuilder.system, .user, .jsonSchema, .variantSchema)
-///   2. Kako je AIProxyClient konfigurisan (base URL / partial key) — obično
-///      u app-startup kodu koji nisam vidio
-///   3. Pravi ItineraryRequest.swift (gore je pretpostavljena verzija)
-///
-/// Sve ostalo (retry, backoff, tolerantni JSON parsing) je već portovano
-/// i spremno za upotrebu čim se poveže stvarni HTTP poziv.
+/// Prompt building (PromptBuilder), retry/backoff i tolerantni JSON parsing
+/// su svi portovani i povezani. Jedino što ostaje NEPROVJERENO je tačan
+/// HTTP ugovor tvog AIProxy servera (vidi napomenu iznad _callAIProxy) —
+/// nisam imao pristup app-startup kodu koji konfiguriše AIProxyClient, pa
+/// sam pretpostavio standardni OpenAI chat-completions oblik. Testiraj sa
+/// stvarnim pozivom i javi ako AIProxy očekuje drugačije header-e/putanju.
 class AIProxyItineraryGenerator implements ItineraryGenerator {
   AIProxyItineraryGenerator({required this.aiProxyBaseUrl});
 
@@ -69,17 +87,46 @@ class AIProxyItineraryGenerator implements ItineraryGenerator {
 
   @override
   Future<ItineraryResponse> generate(ItineraryRequest req) async {
-    // TODO: zamijeni sa stvarnim pozivom kad PromptBuilder bude portovan.
+    final sys = PromptBuilder.system(languageCode: req.languageCode);
+    final user = '${PromptBuilder.user(req)}\n\nReturn only JSON matching the schema.';
+
     final text = await _callAIProxyWithRetry(
-      systemPrompt: _buildSystemPromptPlaceholder(req),
-      userPrompt: _buildUserPromptPlaceholder(req),
+      systemPrompt: sys,
+      userPrompt: user,
       model: req.model,
+      responseSchema: PromptBuilder.jsonSchema,
+      schemaName: 'itinerary_response',
     );
 
     var result = ItineraryJsonParser.decodeItinerary(
       text,
       defaultCountry: req.country,
       defaultCity: req.city,
+    );
+
+    // Zakači prompt snapshot (isto kao Swift — treba za generateAlternativeVariant kasnije).
+    result = ItineraryResponse(
+      country: result.country,
+      city: result.city,
+      days: result.days,
+      cityLat: result.cityLat,
+      cityLon: result.cityLon,
+      roadTrip: result.roadTrip,
+      generatorModel: req.model,
+      promptSnapshot: PromptSnapshot(
+        schemaVersion: 1,
+        model: req.model,
+        createdAt: DateTime.now(),
+        languageCode: req.languageCode,
+        systemPrompt: sys,
+        userPrompt: user,
+        requestFingerprint: null,
+      ),
+      status: result.status,
+      completedAt: result.completedAt,
+      summary: result.summary,
+      pace: result.pace,
+      interests: result.interests,
     );
 
     result = _normalizeInitial(result);
@@ -91,11 +138,18 @@ class AIProxyItineraryGenerator implements ItineraryGenerator {
     required ItineraryResponse plan,
     required int dayNumber,
   }) async {
-    if (plan.promptSnapshot == null) {
+    final snap = plan.promptSnapshot;
+    if (snap == null) {
       throw StateError('error_missing_prompt_snapshot');
     }
 
-    final day = plan.days.where((d) => d.dayNumber == dayNumber).firstOrNull;
+    ItineraryDay? day;
+    for (final d in plan.days) {
+      if (d.dayNumber == dayNumber) {
+        day = d;
+        break;
+      }
+    }
     if (day == null) {
       throw StateError('error_day_not_found: $dayNumber');
     }
@@ -104,13 +158,46 @@ class AIProxyItineraryGenerator implements ItineraryGenerator {
       throw StateError('error_no_more_alternatives');
     }
 
-    // TODO: sastavi task prompt (avoid-repeat blok + strict JSON shape
-    // instrukcija) — logika je identična Swift verziji, samo treba
-    // PromptBuilder da se poveže sa stvarnim snap.userPrompt/systemPrompt.
+    final current = day.activeVariant;
+    final avoid = '''
+Current Day $dayNumber (avoid repeating these exact places/structure):
+- Morning: ${current.morning.title}
+- Afternoon: ${current.afternoon.title}
+- Evening: ${current.evening.title}''';
+
+    final task = '''
+TASK: Generate ONE NEW alternative variant for Day $dayNumber ONLY.
+$avoid
+
+Return JSON ONLY in this exact shape:
+{
+  "dayNumber": $dayNumber,
+  "variant": {
+    "morning":   { "title": "...", "description": "...", "locationName": "...", "lat": <num|null>, "lon": <num|null> },
+    "afternoon": { "title": "...", "description": "...", "locationName": "...", "lat": <num|null>, "lon": <num|null> },
+    "evening":   { "title": "...", "description": "...", "locationName": "...", "lat": <num|null>, "lon": <num|null> },
+    "dayStructure": {
+      "morning":   [ { "title": "...", "steps": ["..."] } ],
+      "afternoon": [ { "title": "...", "steps": ["..."] } ],
+      "evening":   [ { "title": "...", "steps": ["..."] } ]
+    }
+  }
+}
+
+STRICT RULES:
+- Output MUST be in languageCode ${snap.languageCode}.
+- The 'variant' must be a complete alternative day.
+- Do NOT return the full itinerary; only the object above.
+- No emojis. JSON only.''';
+
+    final userPrompt = '${snap.userPrompt}\n\n---\n$task';
+
     final text = await _callAIProxyWithRetry(
-      systemPrompt: plan.promptSnapshot!.systemPrompt,
-      userPrompt: _buildAlternativeTaskPromptPlaceholder(plan, dayNumber),
-      model: plan.promptSnapshot!.model,
+      systemPrompt: snap.systemPrompt,
+      userPrompt: userPrompt,
+      model: snap.model,
+      responseSchema: PromptBuilder.variantSchema,
+      schemaName: 'day_variant',
     );
 
     return ItineraryJsonParser.decodeAlternativeVariant(text, expectedDay: dayNumber);
@@ -149,30 +236,12 @@ class AIProxyItineraryGenerator implements ItineraryGenerator {
     );
   }
 
-  // --- Placeholderi koji čekaju PromptBuilder.swift ---
-
-  String _buildSystemPromptPlaceholder(ItineraryRequest req) {
-    throw UnimplementedError(
-      'PromptBuilder.system() nije portovan — uploaduj PromptBuilder.swift.',
-    );
-  }
-
-  String _buildUserPromptPlaceholder(ItineraryRequest req) {
-    throw UnimplementedError(
-      'PromptBuilder.user() nije portovan — uploaduj PromptBuilder.swift.',
-    );
-  }
-
-  String _buildAlternativeTaskPromptPlaceholder(ItineraryResponse plan, int dayNumber) {
-    throw UnimplementedError(
-      'Task prompt za alternativnu varijantu čeka PromptBuilder.swift.',
-    );
-  }
-
   Future<String> _callAIProxyWithRetry({
     required String systemPrompt,
     required String userPrompt,
     required String model,
+    required Map<String, dynamic>? responseSchema,
+    required String schemaName,
   }) async {
     Object? lastError;
     for (var attempt = 1; attempt <= 3; attempt++) {
@@ -181,6 +250,8 @@ class AIProxyItineraryGenerator implements ItineraryGenerator {
           systemPrompt: systemPrompt,
           userPrompt: userPrompt,
           model: model,
+          responseSchema: responseSchema,
+          schemaName: schemaName,
         );
       } catch (e) {
         if (_isRetryable(e) && attempt < 3) {
@@ -194,16 +265,73 @@ class AIProxyItineraryGenerator implements ItineraryGenerator {
     throw lastError ?? StateError('error_unknown');
   }
 
+  /// ⚠️ NAJBOLJI-MOGUĆI-POKUŠAJ implementacija — nisam imao pristup
+  /// stvarnoj AIProxy konfiguraciji (base URL / auth header / partial key),
+  /// pa ovo šalje standardni OpenAI-kompatibilan chat-completions payload
+  /// (model, messages, response_format, temperature) na [aiProxyBaseUrl].
+  ///
+  /// PRIJE PRVOG POKRETANJA PROVJERI:
+  /// - Da li AIProxy zahtijeva poseban header (npr. `aiproxy-partial-key`,
+  ///   `aiproxy-service-url`) umjesto/pored `Authorization: Bearer`.
+  /// - Tačnu putanju (npr. `/v1/chat/completions` vs. neki AIProxy-specifičan
+  ///   route) — Swift SDK (`AIProxyClient.openAIService`) ovo krije od nas,
+  ///   pa sam pretpostavio OpenAI-standardni oblik jer je model ionako
+  ///   OpenAI-ov (gpt-5-mini).
+  /// - Da li treba API key kao query param ili poseban auth flow.
   Future<String> _callAIProxy({
     required String systemPrompt,
     required String userPrompt,
     required String model,
+    required Map<String, dynamic>? responseSchema,
+    required String schemaName,
   }) async {
-    // TODO: pravi HTTP POST na aiProxyBaseUrl sa {model, messages, ...}
-    // payload-om, čim znamo tačan ugovor AIProxy servera.
-    throw UnimplementedError(
-      'AIProxy HTTP poziv nije portovan — treba mi konfiguracija endpoint-a.',
-    );
+    final responseFormat = responseSchema != null
+        ? {
+            'type': 'json_schema',
+            'json_schema': {
+              'name': schemaName,
+              'schema': responseSchema,
+              'strict': false,
+            },
+          }
+        : {'type': 'json_object'};
+
+    final body = jsonEncode({
+      'model': model,
+      'messages': [
+        {'role': 'system', 'content': systemPrompt},
+        {'role': 'user', 'content': userPrompt},
+      ],
+      'response_format': responseFormat,
+      'temperature': 1.0, // GPT-5 zahtijeva 1.0 (isto kao Swift original)
+    });
+
+    final response = await http
+        .post(
+          aiProxyBaseUrl,
+          headers: {'Content-Type': 'application/json'},
+          body: body,
+        )
+        .timeout(const Duration(seconds: 120));
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw http.ClientException(
+        'AIProxy/OpenAI error (${response.statusCode}) via $model: ${response.body}',
+        aiProxyBaseUrl,
+      );
+    }
+
+    final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+    final choices = decoded['choices'] as List<dynamic>?;
+    final content = choices?.isNotEmpty == true
+        ? (choices!.first as Map<String, dynamic>)['message']?['content'] as String?
+        : null;
+
+    if (content == null || content.isEmpty) {
+      throw StateError('No content from $model');
+    }
+
+    return content;
   }
 }
 

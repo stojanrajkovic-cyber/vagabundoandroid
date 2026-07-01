@@ -18,7 +18,7 @@ class ProfileScreen extends ConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Profile — dolazi u Fazi 7'),
+            const Text('Profile — dolazi u Fazi 7'),
             const SizedBox(height: 16),
             Text(user?.email ?? ''),
             const SizedBox(height: 16),

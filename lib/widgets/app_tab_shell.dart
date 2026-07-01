@@ -98,12 +98,12 @@ class _FloatingTabBar extends StatelessWidget {
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: context.cardBackground.withOpacity(0.92),
+        color: context.cardBackground.withValues(alpha: 0.92),
         borderRadius: BorderRadius.circular(AppSpacing.pillRadius),
         border: Border.all(color: context.cardStroke),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.10),
+            color: Colors.black.withValues(alpha: 0.10),
             blurRadius: 24,
             offset: const Offset(0, 8),
           ),
@@ -155,7 +155,7 @@ class _TabItem extends StatelessWidget {
         curve: Curves.easeOut,
         padding: const EdgeInsets.symmetric(vertical: 8),
         decoration: BoxDecoration(
-          color: isActive ? context.accent.withOpacity(0.10) : Colors.transparent,
+          color: isActive ? context.accent.withValues(alpha: 0.10) : Colors.transparent,
           borderRadius: BorderRadius.circular(AppSpacing.pillRadius),
         ),
         child: Column(
