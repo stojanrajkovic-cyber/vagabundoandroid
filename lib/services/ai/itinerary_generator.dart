@@ -19,18 +19,33 @@ abstract class ItineraryGenerator {
 /// Ekvivalent AIProxyItineraryGenerator.swift.
 ///
 /// Prompt building (PromptBuilder), retry/backoff i tolerantni JSON parsing
-/// su svi portovani i povezani. Jedino što ostaje NEPROVJERENO je tačan
-/// HTTP ugovor tvog AIProxy servera (vidi napomenu iznad _callAIProxy) —
-/// nisam imao pristup app-startup kodu koji konfiguriše AIProxyClient, pa
-/// sam pretpostavio standardni OpenAI chat-completions oblik. Testiraj sa
-/// stvarnim pozivom i javi ako AIProxy očekuje drugačije header-e/putanju.
+/// su svi portovani i povezani. HTTP ugovor je potvrđen iz AIProxySwift SDK
+/// izvornog koda (lzell/AIProxySwift, AIProxyProxiedRequestBuilder +
+/// AIProxyURLRequest.create): POST na `<serviceURL>/v1/chat/completions`,
+/// sa `aiproxy-partial-key` header-om (ekvivalent onome što iOS SDK radi
+/// interno preko partialKey/serviceURL iz AIProxyClient.swift).
+///
+/// ⚠️ POZNATO OGRANIČENJE (TODO Fase 8/9): AIProxy server zahtijeva i
+/// `aiproxy-devicecheck` header — token iz Apple DeviceCheck/App Attest API-ja,
+/// generisan native iOS/macOS SDK-om. Android/Flutter nema direktan ekvivalent
+/// (trebao bi Play Integrity API + eksplicitna AIProxy podrška za taj tok).
+/// Bez tog header-a, stvarni pozivi sa uređaja će vjerovatno dobiti 401 sa
+/// AIProxy servera — to je OČEKIVANO za sada i hvata se kao greška
+/// (SnackBar u MainScreen), ne crash. Za lokalno testiranje bez tog problema,
+/// AIProxy dashboard nudi "device check bypass" token (isto što iOS SDK šalje
+/// kao `aiproxy-devicecheck-bypass` u simulator build-ovima) — ako ga imaš,
+/// dodaj ga kao dodatni header ovdje.
 class AIProxyItineraryGenerator implements ItineraryGenerator {
-  AIProxyItineraryGenerator({required this.aiProxyBaseUrl});
+  AIProxyItineraryGenerator({required this.aiProxyServiceUrl, required this.partialKey});
 
-  /// Endpoint tvog AIProxy servera. AIProxy je proxy koji krije OpenAI
-  /// API ključ i prosljeđuje zahtjeve — isto na iOS i Flutter strani
-  /// (čist HTTP poziv, nema native SDK-a ni na jednoj platformi).
-  final Uri aiProxyBaseUrl;
+  /// AIProxy "service URL" (npr. https://api.aiproxy.com/8c264efa/7b8576a3) —
+  /// ekvivalent AIPROXY_SERVICE_URL iz iOS Info.plist/Secrets.xcconfig.
+  final Uri aiProxyServiceUrl;
+
+  /// AIProxy "partial key" — ekvivalent AIPROXY_PARTIAL_KEY. Po AIProxy
+  /// dizajnu ovo je BEZBJEDNO za bundlovanje u klijentu (server drži drugu
+  /// polovinu ključa) — isto kao što je već bilo bundlovano u iOS Info.plist.
+  final String partialKey;
 
   static const int _maxVariantsPerDay = 3;
 
@@ -227,19 +242,10 @@ STRICT RULES:
     throw lastError ?? StateError('error_unknown');
   }
 
-  /// ⚠️ NAJBOLJI-MOGUĆI-POKUŠAJ implementacija — nisam imao pristup
-  /// stvarnoj AIProxy konfiguraciji (base URL / auth header / partial key),
-  /// pa ovo šalje standardni OpenAI-kompatibilan chat-completions payload
-  /// (model, messages, response_format, temperature) na [aiProxyBaseUrl].
-  ///
-  /// PRIJE PRVOG POKRETANJA PROVJERI:
-  /// - Da li AIProxy zahtijeva poseban header (npr. `aiproxy-partial-key`,
-  ///   `aiproxy-service-url`) umjesto/pored `Authorization: Bearer`.
-  /// - Tačnu putanju (npr. `/v1/chat/completions` vs. neki AIProxy-specifičan
-  ///   route) — Swift SDK (`AIProxyClient.openAIService`) ovo krije od nas,
-  ///   pa sam pretpostavio OpenAI-standardni oblik jer je model ionako
-  ///   OpenAI-ov (gpt-5-mini).
-  /// - Da li treba API key kao query param ili poseban auth flow.
+  /// Šalje standardni OpenAI-kompatibilan chat-completions payload
+  /// (model, messages, response_format, temperature) na
+  /// `<aiProxyServiceUrl>/v1/chat/completions`, sa AIProxy auth header-ima.
+  /// Vidi napomenu o `aiproxy-devicecheck` ograničenju iznad klase.
   Future<String> _callAIProxy({
     required String systemPrompt,
     required String userPrompt,
@@ -268,10 +274,18 @@ STRICT RULES:
       'temperature': 1.0, // GPT-5 zahtijeva 1.0 (isto kao Swift original)
     });
 
+    final endpoint = aiProxyServiceUrl.replace(
+      path: '${aiProxyServiceUrl.path}/v1/chat/completions',
+    );
+
     final response = await http
         .post(
-          aiProxyBaseUrl,
-          headers: {'Content-Type': 'application/json'},
+          endpoint,
+          headers: {
+            'Content-Type': 'application/json',
+            'aiproxy-partial-key': partialKey,
+            // TODO Fase 8/9: 'aiproxy-devicecheck' (vidi napomenu iznad klase).
+          },
           body: body,
         )
         .timeout(const Duration(seconds: 120));
@@ -279,7 +293,7 @@ STRICT RULES:
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw http.ClientException(
         'AIProxy/OpenAI error (${response.statusCode}) via $model: ${response.body}',
-        aiProxyBaseUrl,
+        endpoint,
       );
     }
 
