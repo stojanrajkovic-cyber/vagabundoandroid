@@ -17,8 +17,8 @@ class CountryCityPicker extends ConsumerWidget {
     final state = ref.watch(locationSelectionProvider);
     final notifier = ref.read(locationSelectionProvider.notifier);
 
-    final cityEnabled =
-        state.selectedCountry != null && (!state.isUSSelected || state.selectedStateCode != null);
+    final cityEnabled = state.selectedCountry != null &&
+        (!state.isUSSelected || state.selectedStateCode != null);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -73,6 +73,7 @@ class CountryCityPicker extends ConsumerWidget {
     final countries = ref.read(locationSelectionProvider).countries;
     showModalBottomSheet<void>(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (sheetContext) => _SearchableListSheet<Country>(
@@ -81,7 +82,9 @@ class CountryCityPicker extends ConsumerWidget {
         itemLabel: (c) => c.name,
         onSelected: (country) async {
           Navigator.of(sheetContext).pop();
-          await ref.read(locationSelectionProvider.notifier).selectCountry(country);
+          await ref
+              .read(locationSelectionProvider.notifier)
+              .selectCountry(country);
         },
       ),
     );
@@ -92,6 +95,7 @@ class CountryCityPicker extends ConsumerWidget {
     final states = ref.read(locationSelectionProvider).availableStates;
     showModalBottomSheet<void>(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (sheetContext) => _SearchableListSheet<USState>(
@@ -111,6 +115,7 @@ class CountryCityPicker extends ConsumerWidget {
     final cities = ref.read(locationSelectionProvider).filteredCities;
     showModalBottomSheet<void>(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (sheetContext) => _SearchableListSheet<City>(
@@ -172,7 +177,8 @@ class _PickerButton extends StatelessWidget {
           onTap: enabled ? onTap : null,
           child: Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.md),
+            padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md, vertical: AppSpacing.md),
             decoration: BoxDecoration(
               color: context.cardBackground,
               borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
@@ -193,13 +199,16 @@ class _PickerButton extends StatelessWidget {
                     children: [
                       Text(
                         label,
-                        style: TextStyle(color: context.textSecondary, fontSize: 12),
+                        style: TextStyle(
+                            color: context.textSecondary, fontSize: 12),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         value ?? 'Select $label'.toLowerCase(),
                         style: TextStyle(
-                          color: value != null ? context.textPrimary : context.textSecondary,
+                          color: value != null
+                              ? context.textPrimary
+                              : context.textSecondary,
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                         ),
@@ -211,7 +220,8 @@ class _PickerButton extends StatelessWidget {
                   SizedBox(
                     width: 18,
                     height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: context.accent),
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: context.accent),
                   )
                 else
                   Icon(Icons.expand_more, color: context.textSecondary),
@@ -239,7 +249,8 @@ class _SearchableListSheet<T> extends StatefulWidget {
   final ValueChanged<T> onSelected;
 
   @override
-  State<_SearchableListSheet<T>> createState() => _SearchableListSheetState<T>();
+  State<_SearchableListSheet<T>> createState() =>
+      _SearchableListSheetState<T>();
 }
 
 class _SearchableListSheetState<T> extends State<_SearchableListSheet<T>> {
@@ -250,7 +261,10 @@ class _SearchableListSheetState<T> extends State<_SearchableListSheet<T>> {
     final filtered = _query.isEmpty
         ? widget.items
         : widget.items
-            .where((e) => widget.itemLabel(e).toLowerCase().contains(_query.toLowerCase()))
+            .where((e) => widget
+                .itemLabel(e)
+                .toLowerCase()
+                .contains(_query.toLowerCase()))
             .toList();
 
     return DraggableScrollableSheet(
@@ -262,7 +276,8 @@ class _SearchableListSheetState<T> extends State<_SearchableListSheet<T>> {
         return Container(
           decoration: BoxDecoration(
             color: context.cardBackground,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSpacing.cardRadius)),
+            borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(AppSpacing.cardRadius)),
             border: Border.all(color: context.cardStroke),
           ),
           child: Column(
@@ -303,7 +318,8 @@ class _SearchableListSheetState<T> extends State<_SearchableListSheet<T>> {
                     filled: true,
                     fillColor: Theme.of(context).scaffoldBackgroundColor,
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppSpacing.pillRadius),
+                      borderRadius:
+                          BorderRadius.circular(AppSpacing.pillRadius),
                       borderSide: BorderSide(color: context.cardStroke),
                     ),
                   ),
@@ -318,22 +334,25 @@ class _SearchableListSheetState<T> extends State<_SearchableListSheet<T>> {
                           style: TextStyle(color: context.textSecondary),
                         ),
                       )
-                    : ListView.builder(
-                        controller: scrollController,
-                        itemCount: filtered.length,
-                        itemBuilder: (context, index) {
-                          final item = filtered[index];
-                          return ListTile(
-                            title: Text(
-                              widget.itemLabel(item),
-                              style: TextStyle(color: context.textPrimary),
-                            ),
-                            onTap: () {
-                              Haptics.selection();
-                              widget.onSelected(item);
-                            },
-                          );
-                        },
+                    : Material(
+                        color: context.cardBackground,
+                        child: ListView.builder(
+                          controller: scrollController,
+                          itemCount: filtered.length,
+                          itemBuilder: (context, index) {
+                            final item = filtered[index];
+                            return ListTile(
+                              title: Text(
+                                widget.itemLabel(item),
+                                style: TextStyle(color: context.textPrimary),
+                              ),
+                              onTap: () {
+                                Haptics.selection();
+                                widget.onSelected(item);
+                              },
+                            );
+                          },
+                        ),
                       ),
               ),
             ],

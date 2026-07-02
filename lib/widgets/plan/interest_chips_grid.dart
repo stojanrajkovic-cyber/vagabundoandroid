@@ -132,6 +132,7 @@ class _AddCustomInterestButton extends StatelessWidget {
   void _showAddInterestsSheet(BuildContext context, ValueChanged<String> onSubmit) {
     showModalBottomSheet<void>(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (sheetContext) => _AddInterestsSheet(onSubmit: onSubmit),

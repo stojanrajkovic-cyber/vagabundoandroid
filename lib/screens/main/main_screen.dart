@@ -84,7 +84,16 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                 ),
               ),
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.lg, AppSpacing.md, 140),
+                // AppTabShell (Faza 1) renderuje floating tab bar preko
+                // Scaffold(extendBody: true) — content mora imati dovoljno
+                // donjeg razmaka da zadnja stavka (Generate dugme) može
+                // potpuno da se skroluje iznad njega.
+                padding: EdgeInsets.fromLTRB(
+                  AppSpacing.md,
+                  AppSpacing.lg,
+                  AppSpacing.md,
+                  MediaQuery.of(context).padding.bottom + 96,
+                ),
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
                     const CountryCityPicker(),
@@ -94,22 +103,18 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                     const TripPaceSelector(),
                     const SizedBox(height: AppSpacing.lg),
                     InterestChipsGrid(languageCode: languageCode),
+                    const SizedBox(height: AppSpacing.lg),
+                    PrimaryButton(
+                      label: 'Generate plan',
+                      isLoading: _isGenerating,
+                      onPressed: inputsReady && !_isGenerating
+                          ? () => _handleGenerateTapped(languageCode)
+                          : null,
+                    ),
                   ]),
                 ),
               ),
             ],
-          ),
-          Positioned(
-            left: AppSpacing.md,
-            right: AppSpacing.md,
-            bottom: AppSpacing.md,
-            child: PrimaryButton(
-              label: 'Generate plan',
-              isLoading: _isGenerating,
-              onPressed: inputsReady && !_isGenerating
-                  ? () => _handleGenerateTapped(languageCode)
-                  : null,
-            ),
           ),
           if (_isGenerating) const _GeneratingOverlay(),
         ],
@@ -188,6 +193,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   void _showDebugResultSheet(ItineraryResponse result) {
     showModalBottomSheet<void>(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       builder: (sheetContext) => DraggableScrollableSheet(
         initialChildSize: 0.85,

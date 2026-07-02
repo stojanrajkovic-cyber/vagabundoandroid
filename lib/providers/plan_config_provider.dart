@@ -83,11 +83,21 @@ class PlanConfigState {
 
 /// Ekvivalent PlanConfigViewModel.swift.
 class PlanConfigNotifier extends StateNotifier<PlanConfigState> {
-  PlanConfigNotifier(this._interestsService) : super(const PlanConfigState()) {
+  PlanConfigNotifier(this._ref) : super(const PlanConfigState()) {
     unawaited(_loadCustomInterestsFromPrefs());
   }
 
-  final InterestsServiceType _interestsService;
+  final Ref _ref;
+
+  /// Lijeno čita interestsServiceProvider (NE instancira novi servis) tek
+  /// kad je stvarno potreban — ako se pozove eagerly (npr. direktno u
+  /// StateNotifierProvider create funkciji), a SUPABASE_URL/ANON_KEY nisu
+  /// postavljeni preko --dart-define, interestsServiceProvider baca
+  /// StateError SINHRONO, što bi srušilo CIJELI MainScreen na svaki
+  /// ref.watch(planConfigProvider). Odlaganjem pristupa i hvatanjem greške
+  /// u loadInterestsIfNeeded/refreshRandomInterests, ekran ostaje
+  /// koristan (custom interesi i dalje rade) čak i bez Supabase konfiguracije.
+  InterestsServiceType get _interestsService => _ref.read(interestsServiceProvider);
 
   Future<void> _loadCustomInterestsFromPrefs() async {
     final prefs = await SharedPreferences.getInstance();
@@ -113,23 +123,32 @@ class PlanConfigNotifier extends StateNotifier<PlanConfigState> {
 
   Future<void> loadInterestsIfNeeded({int randomLimit = 12, String lang = 'en'}) async {
     if (state.allInterests.isNotEmpty) return;
-    final items = await _interestsService.fetchRandom(lang: lang, limit: randomLimit);
-    state = state.copyWith(allInterests: items);
+    try {
+      final items = await _interestsService.fetchRandom(lang: lang, limit: randomLimit);
+      state = state.copyWith(allInterests: items);
+    } catch (_) {
+      // Supabase nije konfigurisan (SUPABASE_URL/ANON_KEY) ili network greška —
+      // ostavi allInterests prazno; ekran ostaje koristan (custom interesi rade).
+    }
   }
 
   /// Ekvivalent refreshRandomInterests — zadržava selektovane sistemske
   /// interese, osvježava samo neselektovani pool.
   Future<void> refreshRandomInterests({int limit = 12, String lang = 'en'}) async {
-    final fresh = await _interestsService.fetchRandom(lang: lang, limit: limit);
+    try {
+      final fresh = await _interestsService.fetchRandom(lang: lang, limit: limit);
 
-    final keptSelected = state.allInterests
-        .where((i) => state.selectedInterestKeys.contains(i.key))
-        .toList();
-    final keptKeys = keptSelected.map((i) => i.key).toSet();
+      final keptSelected = state.allInterests
+          .where((i) => state.selectedInterestKeys.contains(i.key))
+          .toList();
+      final keptKeys = keptSelected.map((i) => i.key).toSet();
 
-    final newOnes = fresh.where((i) => !keptKeys.contains(i.key)).toList();
+      final newOnes = fresh.where((i) => !keptKeys.contains(i.key)).toList();
 
-    state = state.copyWith(allInterests: [...keptSelected, ...newOnes]);
+      state = state.copyWith(allInterests: [...keptSelected, ...newOnes]);
+    } catch (_) {
+      // Isto — graceful no-op umjesto propagacije greške u UI.
+    }
   }
 
   void toggleInterest(String key) {
@@ -201,8 +220,7 @@ class PlanConfigNotifier extends StateNotifier<PlanConfigState> {
 }
 
 final planConfigProvider = StateNotifierProvider<PlanConfigNotifier, PlanConfigState>((ref) {
-  final interestsService = ref.read(interestsServiceProvider);
-  return PlanConfigNotifier(interestsService);
+  return PlanConfigNotifier(ref);
 });
 
 /// Ekvivalent Swift `slugify(_:)`: lowercase, ukloni dijakritike, razmaci → "-",
