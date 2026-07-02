@@ -8,6 +8,16 @@ import 'dart:convert';
 /// kad taj fajl stigne.
 const String kDefaultGeneratorModel = 'gpt-4o-mini';
 
+/// Ekvivalent DaySegmentKey + DayPart (iOS ima dva skoro identična enuma sa
+/// `.asDayPart` konverzijom) — u Dartu koristi se JEDAN enum svugdje.
+/// Dart-ov `.name` već daje "morning"/"afternoon"/"evening", ekvivalent
+/// Swift-ovog `.rawValue`.
+enum DayPart {
+  morning,
+  afternoon,
+  evening,
+}
+
 enum PlanStatus {
   planned,
   completed;

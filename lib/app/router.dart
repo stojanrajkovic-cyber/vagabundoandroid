@@ -1,9 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../models/itinerary.dart';
 import '../providers/auth_provider.dart';
 import '../screens/main/main_screen.dart';
 import '../screens/explore/explore_screen.dart';
+import '../screens/result/result_screen.dart';
 import '../screens/saved/saved_plans_screen.dart';
 import '../screens/profile/profile_screen.dart';
 import '../screens/auth/sign_in_sign_up_screen.dart';
@@ -21,6 +23,15 @@ final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/plan',
     routes: [
+      // Van StatefulShellRoute tab strukture (isto kao Swift `.sheet`/full-screen
+      // push za ResultView — ne treba svoj tab, samo se push-uje preko postojećih).
+      GoRoute(
+        path: '/result',
+        builder: (context, state) => ResultScreen(
+          itinerary: state.extra as ItineraryResponse,
+          planId: null,
+        ),
+      ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
           return AppTabShell(navigationShell: navigationShell);

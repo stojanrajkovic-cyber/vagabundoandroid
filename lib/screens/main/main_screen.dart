@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -195,7 +194,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       final result = await generator.generate(request);
       if (!mounted) return;
       setState(() => _isGenerating = false);
-      _showDebugResultSheet(result);
+      context.push('/result', extra: result);
     } catch (e) {
       if (!mounted) return;
       setState(() => _isGenerating = false);
@@ -203,39 +202,6 @@ class _MainScreenState extends ConsumerState<MainScreen> {
         SnackBar(content: Text('Generation failed: $e')),
       );
     }
-  }
-
-  /// TODO Faza 4: zamijeni sa pravim ResultView — za sada samo prikazuje
-  /// sirov JSON rezultata u scrollable bottom sheet-u radi debug-a.
-  void _showDebugResultSheet(ItineraryResponse result) {
-    showModalBottomSheet<void>(
-      context: context,
-      useRootNavigator: true,
-      isScrollControlled: true,
-      builder: (sheetContext) => DraggableScrollableSheet(
-        initialChildSize: 0.85,
-        minChildSize: 0.4,
-        maxChildSize: 0.95,
-        expand: false,
-        builder: (context, scrollController) {
-          return Container(
-            decoration: BoxDecoration(
-              color: context.cardBackground,
-              borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(AppSpacing.cardRadius)),
-            ),
-            padding: const EdgeInsets.all(AppSpacing.md),
-            child: SingleChildScrollView(
-              controller: scrollController,
-              child: SelectableText(
-                const JsonEncoder.withIndent('  ').convert(result.toJson()),
-                style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
-              ),
-            ),
-          );
-        },
-      ),
-    );
   }
 }
 
