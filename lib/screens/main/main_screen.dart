@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -38,6 +39,18 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   double _scrollOffset = 0;
   bool _isGenerating = false;
 
+  /// Ekvivalent `@State private var heroImageName` iz MainView.swift —
+  /// nasumično biran JEDNOM po instanci ekrana (ne na svaki rebuild),
+  /// isto ponašanje kao Swift-ov `.randomElement()` u @State inicijalizatoru.
+  late final String _heroImageAssetPath = _pickRandomHeroImage();
+
+  static const int _heroImageCount = 12;
+
+  static String _pickRandomHeroImage() {
+    final index = Random().nextInt(_heroImageCount) + 1; // 1..12
+    return 'assets/images/hero_bg_$index.jpg';
+  }
+
   @override
   void initState() {
     super.initState();
@@ -68,8 +81,9 @@ class _MainScreenState extends ConsumerState<MainScreen> {
     final config = ref.watch(planConfigProvider);
     final languageCode = Localizations.localeOf(context).languageCode;
 
-    final inputsReady =
-        location.selectedCountry != null && location.selectedCity != null && config.days >= 1;
+    final inputsReady = location.selectedCountry != null &&
+        location.selectedCity != null &&
+        config.days >= 1;
 
     return Scaffold(
       body: Stack(
@@ -81,6 +95,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                 child: AppHeroSection(
                   scrollOffset: _scrollOffset,
                   title: location.selectedCity?.displayName ?? 'Plan your trip',
+                  imageAssetPath: _heroImageAssetPath,
                 ),
               ),
               SliverPadding(
@@ -143,7 +158,8 @@ class _MainScreenState extends ConsumerState<MainScreen> {
     double? originLon;
     if (config.byCar) {
       if (config.useCurrentLocation) {
-        final coordinate = ref.read(deviceLocationManagerProvider).currentCoordinate;
+        final coordinate =
+            ref.read(deviceLocationManagerProvider).currentCoordinate;
         originLat = coordinate?.latitude;
         originLon = coordinate?.longitude;
       } else if (config.originQuery.trim().isNotEmpty) {
@@ -160,7 +176,8 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       cityLat: city.lat,
       cityLon: city.lon,
       tripPace: config.tripPace,
-      interests: ref.read(planConfigProvider.notifier).selectedLabels(languageCode),
+      interests:
+          ref.read(planConfigProvider.notifier).selectedLabels(languageCode),
       byCar: config.byCar,
       originName: originName,
       originLat: originLat,
@@ -204,8 +221,8 @@ class _MainScreenState extends ConsumerState<MainScreen> {
           return Container(
             decoration: BoxDecoration(
               color: context.cardBackground,
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(AppSpacing.cardRadius)),
+              borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(AppSpacing.cardRadius)),
             ),
             padding: const EdgeInsets.all(AppSpacing.md),
             child: SingleChildScrollView(
