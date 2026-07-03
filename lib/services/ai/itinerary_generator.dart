@@ -71,8 +71,13 @@ class CloudItineraryGenerator implements ItineraryGenerator {
       country: result.country,
       city: result.city,
       days: result.days,
-      cityLat: result.cityLat,
-      cityLon: result.cityLon,
+      // Fallback na req.cityLat/cityLon (poznati iz CountryCityPicker-a) ako ih
+      // LLM izostavi iz JSON odgovora — isti pattern kao country/city fallback
+      // u ItineraryJsonParser, samo primijenjen ovdje jer parser ima 3 različite
+      // decode putanje i req nije dostupan u sve tri. Bez ovoga WeatherCard
+      // (Faza 5.5) skoro nikad ne bi imao koordinate za prikaz.
+      cityLat: result.cityLat ?? req.cityLat,
+      cityLon: result.cityLon ?? req.cityLon,
       roadTrip: result.roadTrip,
       generatorModel: req.model,
       promptSnapshot: PromptSnapshot(

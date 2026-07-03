@@ -131,7 +131,12 @@ class _PlanToolsSheet extends StatelessWidget {
           borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSpacing.cardRadius)),
           border: Border.all(color: context.cardStroke),
         ),
-        child: Column(
+        // ListTile crta ink splash-eve na najbližem Material predaku — bez ovoga
+        // Flutter baca "background color or ink splashes may be invisible" (jer
+        // je Container iznad DecoratedBox sa bojom).
+        child: Material(
+          color: Colors.transparent,
+          child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
@@ -173,6 +178,7 @@ class _PlanToolsSheet extends StatelessWidget {
               enabled: false,
             ),
           ],
+          ),
         ),
       ),
     );

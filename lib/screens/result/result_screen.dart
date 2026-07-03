@@ -307,17 +307,12 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
   }
 
   /// 1a — stvarno slanje public link-a preko native share sheet-a.
-  ///
-  /// TODO: potvrdi tačan javni URL format sa korisnikom — ovo je
-  /// pretpostavka (nema deep link/universal link resolver-a još, vidi
-  /// ShareLinkResolverService napomenu u Fazi 5 prompt-u), provjeri da li
-  /// postoji stvarna web stranica koja rezolvira share token.
   Future<void> _handleShareLink() async {
     setState(() => _isShareActionInProgress = true);
     try {
       final info = await _ensureShareInfo();
       if (info == null) return;
-      final url = 'https://vagabundo.app/shared/${info.id}';
+      final url = 'https://vagabundo.app/p/${info.id}';
       await Share.share(url, subject: 'Check out my trip to ${_workingItinerary.city}!');
     } catch (e) {
       if (!mounted) return;
@@ -437,7 +432,11 @@ class _ShareOptionsSheet extends StatelessWidget {
           borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSpacing.cardRadius)),
           border: Border.all(color: context.cardStroke),
         ),
-        child: Column(
+        // ListTile crta ink splash-eve na najbližem Material predaku — bez ovoga
+        // Flutter baca "background color or ink splashes may be invisible".
+        child: Material(
+          color: Colors.transparent,
+          child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
@@ -499,6 +498,7 @@ class _ShareOptionsSheet extends StatelessWidget {
               onTap: onShareAsPdf,
             ),
           ],
+          ),
         ),
       ),
     );
