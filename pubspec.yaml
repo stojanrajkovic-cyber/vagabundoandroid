@@ -10,7 +10,8 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.6
-
+  # Firebase functions
+  cloud_functions: ^4.6.0
   # State management (ekvivalent @StateObject/@EnvironmentObject)
   flutter_riverpod: ^2.5.1
 
