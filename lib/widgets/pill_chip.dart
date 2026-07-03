@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../app/theme/app_theme.dart';
 import '../app/theme/spacing.dart';
 import '../utils/haptics.dart';
+import '../utils/sf_symbol_icons.dart';
 
 /// Ekvivalent capsule chip-a korištenog za interese/trip pace (spomenut u
 /// Fazi 1 arhitekturi kao lib/widgets/pill_chip.dart, sada implementiran).
@@ -18,7 +19,9 @@ class PillChip extends StatelessWidget {
 
   final String label;
 
-  /// Opciona ikona (emoji string iz Interest.icon, ili null).
+  /// SF Symbol naziv iz Interest.icon (npr. "fork.knife", "sparkles") —
+  /// mapira se preko SfSymbolIcons.iconFor() na Flutter Material ikonicu.
+  /// NIJE emoji/literal tekst za direktan prikaz.
   final String? icon;
   final bool isSelected;
   final VoidCallback? onTap;
@@ -26,9 +29,12 @@ class PillChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final background = isSelected ? context.accent.withValues(alpha: 0.10) : context.cardBackground;
+    final background = isSelected
+        ? context.accent.withValues(alpha: 0.10)
+        : context.cardBackground;
     final foreground = isSelected ? context.accent : context.textPrimary;
-    final border = isSelected ? context.accent.withValues(alpha: 0.4) : context.cardStroke;
+    final border =
+        isSelected ? context.accent.withValues(alpha: 0.4) : context.cardStroke;
 
     return Material(
       color: Colors.transparent,
@@ -41,7 +47,8 @@ class PillChip extends StatelessWidget {
                 onTap!();
               },
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+          padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md, vertical: AppSpacing.sm),
           decoration: BoxDecoration(
             color: background,
             borderRadius: BorderRadius.circular(AppSpacing.pillRadius),
@@ -51,12 +58,15 @@ class PillChip extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               if (icon != null && icon!.isNotEmpty) ...[
-                Text(icon!, style: const TextStyle(fontSize: 14)),
+                Icon(SfSymbolIcons.iconFor(icon!), size: 15, color: foreground),
                 const SizedBox(width: AppSpacing.xs),
               ],
               Text(
                 label,
-                style: TextStyle(fontSize: 14, color: foreground, fontWeight: FontWeight.w500),
+                style: TextStyle(
+                    fontSize: 14,
+                    color: foreground,
+                    fontWeight: FontWeight.w500),
               ),
               if (onDelete != null) ...[
                 const SizedBox(width: AppSpacing.xs),
