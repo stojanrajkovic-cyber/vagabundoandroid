@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../app/theme/colors.dart';
 import '../app/theme/spacing.dart';
+import '../app/theme/typography.dart';
 
 /// Ekvivalent PrimaryButton s gradient-om iz SwiftUI-a.
 class PrimaryButton extends StatelessWidget {
@@ -45,11 +46,7 @@ class PrimaryButton extends StatelessWidget {
                   )
                 : Text(
                     label,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: AppTypography.button.copyWith(color: Colors.white),
                   ),
           ),
         ),

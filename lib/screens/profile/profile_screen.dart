@@ -18,13 +18,13 @@ class ProfileScreen extends ConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('Profile — dolazi u Fazi 7'),
+            const Text('Profile — coming in Phase 7'),
             const SizedBox(height: 16),
             Text(user?.email ?? ''),
             const SizedBox(height: 16),
             TextButton(
               onPressed: authService.signOut,
-              child: const Text('Odjava'),
+              child: const Text('Sign out'),
             ),
           ],
         ),

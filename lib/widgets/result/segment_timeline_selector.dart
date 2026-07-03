@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../app/theme/app_theme.dart';
+import '../../app/theme/typography.dart';
 import '../../models/itinerary.dart';
 import '../../utils/haptics.dart';
 
@@ -78,8 +79,7 @@ class SegmentTimelineSelector extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             _labels[part]!,
-            style: TextStyle(
-              fontSize: 12,
+            style: AppTypography.fieldLabel.copyWith(
               color: isSelected ? context.textPrimary : context.textSecondary,
             ),
           ),

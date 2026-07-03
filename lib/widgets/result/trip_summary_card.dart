@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../app/theme/app_theme.dart';
 import '../../app/theme/colors.dart';
 import '../../app/theme/spacing.dart';
+import '../../app/theme/typography.dart';
 import '../../models/itinerary.dart';
 
 /// Ekvivalent tripSummaryCard iz ResultView.swift.
@@ -40,20 +41,20 @@ class TripSummaryCard extends StatelessWidget {
                   children: [
                     Text(
                       itinerary.country,
-                      style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: context.textSecondary),
+                      style: AppTypography.bodySecondary.copyWith(color: context.textSecondary),
                     ),
-                    Text('•', style: TextStyle(color: context.textSecondary)),
-                    Text('${itinerary.days.length} days', style: TextStyle(fontSize: 14, color: context.textSecondary)),
+                    Text('•', style: AppTypography.bodySecondary.copyWith(color: context.textSecondary)),
+                    Text('${itinerary.days.length} days', style: AppTypography.bodySecondary.copyWith(color: context.textSecondary)),
                     if (itinerary.pace != null)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: AppSpacing.xs),
                         decoration: BoxDecoration(
                           color: context.chipSelectedBackground,
                           borderRadius: BorderRadius.circular(AppSpacing.pillRadius),
                         ),
                         child: Text(
                           _paceLabel(itinerary.pace!),
-                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: context.chipSelectedText),
+                          style: AppTypography.chip.copyWith(color: context.chipSelectedText),
                         ),
                       ),
                   ],
@@ -64,7 +65,7 @@ class TripSummaryCard extends StatelessWidget {
                     summary,
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 13, color: context.textPrimary),
+                    style: AppTypography.bodySecondary.copyWith(color: context.textPrimary),
                   ),
                 ],
               ],

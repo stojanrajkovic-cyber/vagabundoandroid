@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/theme/app_theme.dart';
 import '../../app/theme/spacing.dart';
+import '../../app/theme/typography.dart';
 import '../../providers/plan_config_provider.dart';
 import '../../utils/haptics.dart';
 import '../pill_chip.dart';
@@ -32,11 +33,7 @@ class InterestChipsGrid extends ConsumerWidget {
             Expanded(
               child: Text(
                 'Interests',
-                style: TextStyle(
-                  color: context.textPrimary,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                ),
+                style: AppTypography.sectionTitle.copyWith(color: context.textPrimary),
               ),
             ),
             IconButton(
@@ -120,7 +117,7 @@ class _AddCustomInterestButton extends StatelessWidget {
               const SizedBox(width: AppSpacing.xs),
               Text(
                 'Add interest',
-                style: TextStyle(fontSize: 14, color: context.accent, fontWeight: FontWeight.w600),
+                style: AppTypography.chip.copyWith(color: context.accent),
               ),
             ],
           ),
@@ -180,16 +177,12 @@ class _AddInterestsSheetState extends State<_AddInterestsSheet> {
           children: [
             Text(
               'Add interests',
-              style: TextStyle(
-                color: context.textPrimary,
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-              ),
+              style: AppTypography.sectionTitle.copyWith(color: context.textPrimary),
             ),
             const SizedBox(height: AppSpacing.xs),
             Text(
               'Separate multiple interests with commas.',
-              style: TextStyle(color: context.textSecondary, fontSize: 13),
+              style: AppTypography.bodySecondary.copyWith(color: context.textSecondary),
             ),
             const SizedBox(height: AppSpacing.md),
             TextField(

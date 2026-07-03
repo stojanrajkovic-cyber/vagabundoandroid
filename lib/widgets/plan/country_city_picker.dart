@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/theme/app_theme.dart';
 import '../../app/theme/spacing.dart';
+import '../../app/theme/typography.dart';
 import '../../providers/location_selection_provider.dart';
 import '../../services/location/countries_cities_service.dart';
 import '../../utils/haptics.dart';
@@ -48,7 +49,7 @@ class CountryCityPicker extends ConsumerWidget {
           const SizedBox(height: AppSpacing.xs),
           Text(
             state.citiesLoadError!,
-            style: TextStyle(color: Colors.red.shade400, fontSize: 12),
+            style: AppTypography.bodySecondary.copyWith(color: Colors.red.shade400),
           ),
         ],
         if (notifier.selectedCountryMetadata() != null) ...[
@@ -146,7 +147,7 @@ class _CountryMetadataLine extends StatelessWidget {
     if (parts.isEmpty) return const SizedBox.shrink();
     return Text(
       parts.join(' · '),
-      style: TextStyle(color: context.textSecondary, fontSize: 12),
+      style: AppTypography.bodySecondary.copyWith(color: context.textSecondary),
     );
   }
 }
@@ -199,18 +200,15 @@ class _PickerButton extends StatelessWidget {
                     children: [
                       Text(
                         label,
-                        style: TextStyle(
-                            color: context.textSecondary, fontSize: 12),
+                        style: AppTypography.fieldLabel.copyWith(color: context.textSecondary),
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        value ?? 'Select $label'.toLowerCase(),
-                        style: TextStyle(
+                        value ?? 'Select ${label.toLowerCase()}',
+                        style: AppTypography.body.copyWith(
                           color: value != null
                               ? context.textPrimary
                               : context.textSecondary,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ],
@@ -300,11 +298,7 @@ class _SearchableListSheetState<T> extends State<_SearchableListSheet<T>> {
                 ),
                 child: Text(
                   widget.title,
-                  style: TextStyle(
-                    color: context.textPrimary,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: AppTypography.sectionTitle.copyWith(color: context.textPrimary),
                 ),
               ),
               Padding(
@@ -331,7 +325,7 @@ class _SearchableListSheetState<T> extends State<_SearchableListSheet<T>> {
                     ? Center(
                         child: Text(
                           'No results',
-                          style: TextStyle(color: context.textSecondary),
+                          style: AppTypography.bodySecondary.copyWith(color: context.textSecondary),
                         ),
                       )
                     : Material(
@@ -344,7 +338,7 @@ class _SearchableListSheetState<T> extends State<_SearchableListSheet<T>> {
                             return ListTile(
                               title: Text(
                                 widget.itemLabel(item),
-                                style: TextStyle(color: context.textPrimary),
+                                style: AppTypography.body.copyWith(color: context.textPrimary),
                               ),
                               onTap: () {
                                 Haptics.selection();

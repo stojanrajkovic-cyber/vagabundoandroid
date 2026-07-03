@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../app/theme/app_theme.dart';
 import '../../app/theme/colors.dart';
 import '../../app/theme/spacing.dart';
+import '../../app/theme/typography.dart';
 
 /// Port AppHeroSection.swift — parallax hero na vrhu MainScreen-a.
 ///
@@ -91,11 +92,7 @@ class AppHeroSection extends StatelessWidget {
                   imageFilter: ui.ImageFilter.blur(sigmaX: titleBlur, sigmaY: titleBlur),
                   child: Text(
                     title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 28,
-                      fontWeight: FontWeight.w700,
-                    ),
+                    style: AppTypography.heroTitle.copyWith(color: Colors.white),
                   ),
                 ),
               ),

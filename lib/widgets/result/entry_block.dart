@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../app/theme/app_theme.dart';
+import '../../app/theme/spacing.dart';
+import '../../app/theme/typography.dart';
 import '../../models/itinerary.dart';
 
 /// Ekvivalent EntryBlock (private struct u ResultView.swift) — legacy
@@ -8,7 +10,8 @@ import '../../models/itinerary.dart';
 class EntryBlock extends StatelessWidget {
   const EntryBlock({super.key, required this.label, required this.item});
 
-  /// Hardkodirano "Morning"/"Afternoon"/"Evening" iz poziva (l10n dolazi kasnije).
+  /// "Morning"/"Afternoon"/"Evening" iz poziva — app je engleski-only,
+  /// nema l10n sistema (namjerna odluka).
   final String label;
   final ItineraryItem item;
 
@@ -25,21 +28,21 @@ class EntryBlock extends StatelessWidget {
         children: [
           Row(
             children: [
-              Text(label, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: context.textPrimary)),
+              Text(label, style: AppTypography.cardTitle.copyWith(color: context.textPrimary)),
               const Spacer(),
               if (locationName.isNotEmpty)
                 Flexible(
                   child: Text(
                     locationName,
                     textAlign: TextAlign.end,
-                    style: TextStyle(fontSize: 12, color: context.textSecondary),
+                    style: AppTypography.bodySecondary.copyWith(color: context.textSecondary),
                   ),
                 ),
             ],
           ),
-          const SizedBox(height: 4),
-          Text(item.title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: context.textPrimary)),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpacing.xs),
+          Text(item.title, style: AppTypography.body.copyWith(color: context.textPrimary)),
+          const SizedBox(height: AppSpacing.xs),
           _renderDescription(context, item.description),
         ],
       ),
@@ -63,8 +66,8 @@ class EntryBlock extends StatelessWidget {
     if (trimmed.startsWith('[CAR]')) {
       final carText = trimmed.substring('[CAR]'.length).trim();
       return Container(
-        margin: const EdgeInsets.only(top: 4, bottom: 4),
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        margin: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 6),
         decoration: BoxDecoration(color: context.chipBackground, borderRadius: BorderRadius.circular(8)),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -74,7 +77,7 @@ class EntryBlock extends StatelessWidget {
             Flexible(
               child: Text(
                 carText,
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: context.textPrimary),
+                style: AppTypography.chip.copyWith(color: context.textPrimary),
               ),
             ),
           ],
@@ -82,6 +85,6 @@ class EntryBlock extends StatelessWidget {
       );
     }
 
-    return Text(rawLine, style: TextStyle(fontSize: 14, color: context.textPrimary));
+    return Text(rawLine, style: AppTypography.body.copyWith(color: context.textPrimary));
   }
 }

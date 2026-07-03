@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../app/theme/app_theme.dart';
 import '../app/theme/spacing.dart';
+import '../app/theme/typography.dart';
 import '../utils/haptics.dart';
 import '../utils/sf_symbol_icons.dart';
 
@@ -63,10 +64,7 @@ class PillChip extends StatelessWidget {
               ],
               Text(
                 label,
-                style: TextStyle(
-                    fontSize: 14,
-                    color: foreground,
-                    fontWeight: FontWeight.w500),
+                style: AppTypography.chip.copyWith(color: foreground),
               ),
               if (onDelete != null) ...[
                 const SizedBox(width: AppSpacing.xs),

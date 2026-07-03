@@ -3,6 +3,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../../app/theme/app_theme.dart';
 import '../../app/theme/spacing.dart';
+import '../../app/theme/typography.dart';
 import '../../models/itinerary.dart';
 import '../../utils/haptics.dart';
 import 'day_map_view.dart';
@@ -66,7 +67,7 @@ class _DayCardState extends State<DayCard> {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(AppSpacing.screenPadding),
       decoration: BoxDecoration(
         color: context.cardBackground,
         borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
@@ -87,7 +88,7 @@ class _DayCardState extends State<DayCard> {
           OutlinedButton.icon(
             onPressed: _openFullScreenMap,
             icon: const Icon(Icons.open_in_full, size: 14),
-            label: const Text('Expand map', style: TextStyle(fontSize: 12)),
+            label: const Text('Expand map', style: AppTypography.bodySecondary),
           ),
           const SizedBox(height: 10),
           if (widget.day.dayStructure != null)

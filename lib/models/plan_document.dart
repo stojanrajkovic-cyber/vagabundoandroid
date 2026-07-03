@@ -152,7 +152,8 @@ class UserStats {
     );
   }
 
-  /// Ekvivalent travelerLevelKey — koristi kao l10n ključ.
+  /// Ekvivalent travelerLevelKey iz Swift originala — trenutno se ne koristi,
+  /// app je engleski-only (nema l10n sistema, namjerna odluka).
   String get travelerLevelKey {
     if (completedPlans == 0) return 'level_one_step';
     if (completedPlans < 5) return 'level_baby_footsteps';

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../app/theme/spacing.dart';
+import '../../app/theme/typography.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/primary_button.dart';
 
@@ -66,17 +67,17 @@ class _SignInSignUpScreenState extends ConsumerState<SignInSignUpScreen> {
   String _mapAuthError(FirebaseAuthException e) {
     switch (e.code) {
       case 'invalid-email':
-        return 'Email adresa nije valjana.';
+        return 'That email address is invalid.';
       case 'user-not-found':
       case 'wrong-password':
       case 'invalid-credential':
-        return 'Pogrešan email ili lozinka.';
+        return 'Incorrect email or password.';
       case 'email-already-in-use':
-        return 'Račun s ovim emailom već postoji.';
+        return 'An account with this email already exists.';
       case 'weak-password':
-        return 'Lozinka je preslaba.';
+        return 'That password is too weak.';
       default:
-        return e.message ?? 'Došlo je do greške. Pokušaj ponovno.';
+        return e.message ?? 'Something went wrong. Please try again.';
     }
   }
 
@@ -93,16 +94,14 @@ class _SignInSignUpScreenState extends ConsumerState<SignInSignUpScreen> {
               children: [
                 const SizedBox(height: AppSpacing.xxl),
                 Text(
-                  _isSignUp ? 'Kreiraj račun' : 'Dobrodošao natrag',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                  _isSignUp ? 'Create account' : 'Welcome back',
+                  style: AppTypography.heroTitle.copyWith(color: Theme.of(context).colorScheme.onSurface),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 Text(
-                  'Prijavi se da spremiš svoje planove puta.',
-                  style: Theme.of(context).textTheme.bodyMedium,
+                  'Sign in to save your travel plans.',
+                  style: AppTypography.body.copyWith(color: Theme.of(context).colorScheme.onSurface),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: AppSpacing.xl),
@@ -116,7 +115,7 @@ class _SignInSignUpScreenState extends ConsumerState<SignInSignUpScreen> {
                   ),
                   validator: (value) {
                     if (value == null || !value.contains('@')) {
-                      return 'Unesi valjan email';
+                      return 'Enter a valid email';
                     }
                     return null;
                   },
@@ -126,12 +125,12 @@ class _SignInSignUpScreenState extends ConsumerState<SignInSignUpScreen> {
                   controller: _passwordController,
                   obscureText: true,
                   decoration: const InputDecoration(
-                    labelText: 'Lozinka',
+                    labelText: 'Password',
                     border: OutlineInputBorder(),
                   ),
                   validator: (value) {
                     if (value == null || value.length < 6) {
-                      return 'Lozinka mora imati barem 6 znakova';
+                      return 'Password must be at least 6 characters';
                     }
                     return null;
                   },
@@ -140,13 +139,13 @@ class _SignInSignUpScreenState extends ConsumerState<SignInSignUpScreen> {
                   const SizedBox(height: AppSpacing.sm),
                   Text(
                     _errorMessage!,
-                    style: const TextStyle(color: Colors.red),
+                    style: AppTypography.body.copyWith(color: Colors.red),
                     textAlign: TextAlign.center,
                   ),
                 ],
                 const SizedBox(height: AppSpacing.lg),
                 PrimaryButton(
-                  label: _isSignUp ? 'Registriraj se' : 'Prijavi se',
+                  label: _isSignUp ? 'Sign up' : 'Sign in',
                   isLoading: _isLoading,
                   onPressed: _submit,
                 ),
@@ -155,8 +154,8 @@ class _SignInSignUpScreenState extends ConsumerState<SignInSignUpScreen> {
                   onPressed: () => setState(() => _isSignUp = !_isSignUp),
                   child: Text(
                     _isSignUp
-                        ? 'Već imaš račun? Prijavi se'
-                        : 'Nemaš račun? Registriraj se',
+                        ? 'Already have an account? Sign in'
+                        : "Don't have an account? Sign up",
                   ),
                 ),
               ],

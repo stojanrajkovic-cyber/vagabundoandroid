@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/theme/app_theme.dart';
 import '../../app/theme/spacing.dart';
+import '../../app/theme/typography.dart';
 import '../../providers/location_provider.dart';
 import '../../providers/plan_config_provider.dart';
 import '../../utils/haptics.dart';
@@ -196,7 +197,7 @@ class _DaysStepper extends StatelessWidget {
         Expanded(
           child: Text(
             'Days',
-            style: TextStyle(color: context.textPrimary, fontSize: 16, fontWeight: FontWeight.w600),
+            style: AppTypography.sectionTitle.copyWith(color: context.textPrimary),
           ),
         ),
         _StepperButton(
@@ -208,7 +209,7 @@ class _DaysStepper extends StatelessWidget {
           child: Text(
             '$days',
             textAlign: TextAlign.center,
-            style: TextStyle(color: context.textPrimary, fontSize: 16, fontWeight: FontWeight.w700),
+            style: AppTypography.body.copyWith(color: context.textPrimary),
           ),
         ),
         _StepperButton(
@@ -244,7 +245,7 @@ class _NumberStepper extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: Text(label, style: TextStyle(color: context.textPrimary, fontSize: 14)),
+          child: Text(label, style: AppTypography.body.copyWith(color: context.textPrimary)),
         ),
         _StepperButton(
           icon: Icons.remove,
@@ -260,7 +261,7 @@ class _NumberStepper extends StatelessWidget {
           child: Text(
             formatter(value),
             textAlign: TextAlign.center,
-            style: TextStyle(color: context.textPrimary, fontSize: 14, fontWeight: FontWeight.w700),
+            style: AppTypography.body.copyWith(color: context.textPrimary),
           ),
         ),
         _StepperButton(
@@ -314,7 +315,7 @@ class _ToggleRow extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: Text(label, style: TextStyle(color: context.textPrimary, fontSize: 16)),
+          child: Text(label, style: AppTypography.body.copyWith(color: context.textPrimary)),
         ),
         Switch(
           value: value,

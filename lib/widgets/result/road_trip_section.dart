@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../app/theme/app_theme.dart';
 import '../../app/theme/spacing.dart';
+import '../../app/theme/typography.dart';
 import '../../models/itinerary.dart';
 
 /// Ekvivalent RoadTripSection iz ResultView.swift — POJEDNOSTAVLJENA verzija
@@ -16,7 +17,7 @@ class RoadTripSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(color: context.cardBackground, borderRadius: BorderRadius.circular(AppSpacing.cardRadius)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -24,22 +25,22 @@ class RoadTripSection extends StatelessWidget {
           Row(
             children: [
               Icon(Icons.directions_car, color: context.textPrimary),
-              const SizedBox(width: 8),
-              Text('Road Trip', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 17, color: context.textPrimary)),
+              const SizedBox(width: AppSpacing.sm),
+              Text('Road trip', style: AppTypography.sectionTitle.copyWith(color: context.textPrimary)),
             ],
           ),
           if (trip.origin != null && trip.destination != null) ...[
-            const SizedBox(height: 4),
-            Text('${trip.origin} → ${trip.destination}', style: TextStyle(fontSize: 14, color: context.textSecondary)),
+            const SizedBox(height: AppSpacing.xs),
+            Text('${trip.origin} → ${trip.destination}', style: AppTypography.bodySecondary.copyWith(color: context.textSecondary)),
           ],
           if (trip.totalDistanceKm != null && trip.totalDurationMin != null) ...[
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.xs),
             Text(
               '${trip.totalDistanceKm!.toStringAsFixed(1)} km · ${(trip.totalDurationMin! / 60).toStringAsFixed(1)} h total',
-              style: TextStyle(fontSize: 12, color: context.textSecondary),
+              style: AppTypography.bodySecondary.copyWith(color: context.textSecondary),
             ),
           ],
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.md),
           for (final day in trip.days) _dayCard(context, day),
         ],
       ),
@@ -53,8 +54,8 @@ class RoadTripSection extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(bottom: AppSpacing.md),
+      padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
         border: Border.all(color: context.cardStroke),
@@ -62,22 +63,22 @@ class RoadTripSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Day ${day.dayNumber}', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: context.textPrimary)),
+          Text('Day ${day.dayNumber}', style: AppTypography.cardTitle.copyWith(color: context.textPrimary)),
           if (title.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(top: 2),
-              child: Text(title, style: TextStyle(fontSize: 12, color: context.textSecondary)),
+              child: Text(title, style: AppTypography.bodySecondary.copyWith(color: context.textSecondary)),
             ),
           if (subtitle.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(top: 2),
-              child: Text(subtitle, style: TextStyle(fontSize: 12, color: context.textSecondary)),
+              child: Text(subtitle, style: AppTypography.bodySecondary.copyWith(color: context.textSecondary)),
             ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           if (segments.isNotEmpty)
             for (final seg in segments) _segmentRow(context, seg)
           else
-            Text('No segments available.', style: TextStyle(fontSize: 12, color: context.textSecondary)),
+            Text('No segments available.', style: AppTypography.bodySecondary.copyWith(color: context.textSecondary)),
         ],
       ),
     );
@@ -101,22 +102,22 @@ class RoadTripSection extends StatelessWidget {
     final address = seg.address?.trim() ?? '';
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(icon, size: 16, color: context.textSecondary),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   '$label ${_minutesToText(seg.minutes)}'.trim(),
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: context.textPrimary),
+                  style: AppTypography.body.copyWith(color: context.textPrimary),
                 ),
                 if (address.isNotEmpty)
-                  Text(address, style: TextStyle(fontSize: 11, color: context.textSecondary)),
+                  Text(address, style: AppTypography.bodySecondary.copyWith(color: context.textSecondary)),
               ],
             ),
           ),

@@ -1,12 +1,16 @@
 import 'dart:async';
 import 'dart:math';
 
+import '../../app/hero_taglines.dart';
+import '../../widgets/plan/floating_top_bar.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/theme/app_theme.dart';
 import '../../app/theme/spacing.dart';
+import '../../app/theme/typography.dart';
 import '../../models/itinerary.dart';
 import '../../providers/ai_provider.dart';
 import '../../providers/auth_provider.dart';
@@ -42,6 +46,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   /// nasumično biran JEDNOM po instanci ekrana (ne na svaki rebuild),
   /// isto ponašanje kao Swift-ov `.randomElement()` u @State inicijalizatoru.
   late final String _heroImageAssetPath = _pickRandomHeroImage();
+  late final String _heroTagline = HeroTaglines.pickRandom();
 
   static const int _heroImageCount = 12;
 
@@ -93,7 +98,11 @@ class _MainScreenState extends ConsumerState<MainScreen> {
               SliverToBoxAdapter(
                 child: AppHeroSection(
                   scrollOffset: _scrollOffset,
-                  title: location.selectedCity?.displayName ?? 'Plan your trip',
+                  title: (location.selectedCity != null &&
+                          location.selectedCountry != null)
+                      ? 'Plan your trip to ${location.selectedCity!.name}, '
+                          '${location.selectedCountry!.name}.'
+                      : _heroTagline,
                   imageAssetPath: _heroImageAssetPath,
                 ),
               ),
@@ -131,6 +140,24 @@ class _MainScreenState extends ConsumerState<MainScreen> {
             ],
           ),
           if (_isGenerating) const _GeneratingOverlay(),
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: FloatingTopBar(
+              scrollOffset: _scrollOffset,
+              onReviewTap: () {
+                // TODO: in_app_review integracija (App Store/Play Store rating prompt)
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Coming soon')),
+                );
+              },
+              onSettingsTap: () {
+                // TODO: pravi Settings ekran — za sada vodi na Account tab
+                context.go('/profile');
+              },
+            ),
+          ),
         ],
       ),
     );
@@ -217,13 +244,13 @@ class _GeneratingOverlay extends StatefulWidget {
 
 class _GeneratingOverlayState extends State<_GeneratingOverlay> {
   static const List<String> _steps = [
-    'gen_step_analyzing',
-    'gen_step_coordinates',
-    'gen_step_roadtrip',
-    'gen_step_interests',
-    'gen_step_planning',
-    'gen_step_routes',
-    'gen_step_finalizing',
+    'Analyzing your trip',
+    'Finding coordinates',
+    'Planning road trip',
+    'Matching interests',
+    'Building your itinerary',
+    'Optimizing routes',
+    'Finalizing plan',
   ];
 
   int _stepIndex = 0;
@@ -265,10 +292,9 @@ class _GeneratingOverlayState extends State<_GeneratingOverlay> {
                 CircularProgressIndicator(color: context.accent),
                 const SizedBox(height: AppSpacing.md),
                 Text(
-                  // TODO: zamijeni sa lokalizovanim stringom za ključ _steps[_stepIndex]
-                  // kad se l10n sistem oživi (vidi TripPace.localizationKey pattern).
                   _steps[_stepIndex],
-                  style: TextStyle(color: context.textPrimary, fontSize: 13),
+                  style: AppTypography.bodySecondary
+                      .copyWith(color: context.textPrimary),
                   textAlign: TextAlign.center,
                 ),
               ],

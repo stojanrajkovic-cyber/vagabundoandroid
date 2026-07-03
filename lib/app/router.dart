@@ -27,10 +27,22 @@ final routerProvider = Provider<GoRouter>((ref) {
       // push za ResultView — ne treba svoj tab, samo se push-uje preko postojećih).
       GoRoute(
         path: '/result',
-        builder: (context, state) => ResultScreen(
-          itinerary: state.extra as ItineraryResponse,
-          planId: null,
-        ),
+        builder: (context, state) {
+          final extra = state.extra;
+          if (extra is ResultScreenArgs) {
+            return ResultScreen(
+              itinerary: extra.itinerary,
+              planId: extra.planId,
+              isReadOnly: extra.isReadOnly,
+              showMarkCompleted: extra.showMarkCompleted,
+              onMarkCompleted: extra.onMarkCompleted,
+              showsCloseButton: extra.showsCloseButton,
+            );
+          }
+          // Svježe generisan plan (Faza 3/4 flow) — main_screen.dart i dalje
+          // prosljeđuje samo ItineraryResponse kroz `extra`.
+          return ResultScreen(itinerary: extra as ItineraryResponse, planId: null);
+        },
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {

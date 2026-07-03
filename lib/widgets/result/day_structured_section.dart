@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../app/theme/app_theme.dart';
 import '../../app/theme/colors.dart';
 import '../../app/theme/spacing.dart';
+import '../../app/theme/typography.dart';
 import '../../models/itinerary.dart';
 import 'segment_timeline_selector.dart';
 
@@ -92,7 +93,7 @@ class _DayStructuredSectionState extends State<DayStructuredSection> {
 
   Widget _generatingBadge(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
         color: context.cardBackground.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(14),
@@ -101,10 +102,10 @@ class _DayStructuredSectionState extends State<DayStructuredSection> {
         mainAxisSize: MainAxisSize.min,
         children: [
           CircularProgressIndicator(color: context.accent),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.md),
           Text(
             'Generating…',
-            style: TextStyle(fontSize: 12, color: context.textSecondary),
+            style: AppTypography.bodySecondary.copyWith(color: context.textSecondary),
           ),
         ],
       ),
@@ -133,25 +134,25 @@ class _DayStructuredSectionState extends State<DayStructuredSection> {
       children: [
         Text(
           item.title,
-          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: context.textPrimary),
+          style: AppTypography.cardTitle.copyWith(color: context.textPrimary),
         ),
         if (desc.isNotEmpty) ...[
-          const SizedBox(height: 4),
-          Text(desc, style: TextStyle(fontSize: 15, color: context.textPrimary)),
+          const SizedBox(height: AppSpacing.xs),
+          Text(desc, style: AppTypography.body.copyWith(color: context.textPrimary)),
         ],
         if (locationName.isNotEmpty) ...[
-          const SizedBox(height: 4),
-          Text(locationName, style: TextStyle(fontSize: 12, color: context.textSecondary)),
+          const SizedBox(height: AppSpacing.xs),
+          Text(locationName, style: AppTypography.bodySecondary.copyWith(color: context.textSecondary)),
         ],
         const SizedBox(height: 10),
         _blocksView(context, blocks),
         if (!widget.isReadOnly && !widget.isSavedPlan) ...[
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           _alternativeButton(context, part),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           Text(
             'Generate a new version, or switch back to one you already created.',
-            style: TextStyle(fontSize: 12, color: context.textSecondary),
+            style: AppTypography.bodySecondary.copyWith(color: context.textSecondary),
           ),
         ],
       ],
@@ -162,7 +163,7 @@ class _DayStructuredSectionState extends State<DayStructuredSection> {
     if (blocks == null || blocks.isEmpty) {
       return Text(
         'No structure available for this part of the day.',
-        style: TextStyle(fontSize: 12, color: context.textSecondary),
+        style: AppTypography.bodySecondary.copyWith(color: context.textSecondary),
       );
     }
 
@@ -172,7 +173,7 @@ class _DayStructuredSectionState extends State<DayStructuredSection> {
         for (var i = 0; i < blocks.length; i++) ...[
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(AppSpacing.md),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: AppColors.cerulean.withValues(alpha: 0.25)),
@@ -182,9 +183,9 @@ class _DayStructuredSectionState extends State<DayStructuredSection> {
               children: [
                 Text(
                   blocks[i].title,
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: context.textPrimary),
+                  style: AppTypography.cardTitle.copyWith(color: context.textPrimary),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.sm),
                 for (final step in blocks[i].steps)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 6),
@@ -203,7 +204,7 @@ class _DayStructuredSectionState extends State<DayStructuredSection> {
                           ),
                         ),
                         Expanded(
-                          child: Text(step, style: TextStyle(fontSize: 14, color: context.textSecondary)),
+                          child: Text(step, style: AppTypography.bodySecondary.copyWith(color: context.textSecondary)),
                         ),
                       ],
                     ),
@@ -211,7 +212,7 @@ class _DayStructuredSectionState extends State<DayStructuredSection> {
               ],
             ),
           ),
-          if (i < blocks.length - 1) const SizedBox(height: 12),
+          if (i < blocks.length - 1) const SizedBox(height: AppSpacing.md),
         ],
       ],
     );
@@ -325,7 +326,7 @@ class _AltButton extends StatelessWidget {
                   : Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(label, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
+                        Text(label, style: AppTypography.button.copyWith(color: Colors.white)),
                         if (showIcon) ...[
                           const SizedBox(width: 8),
                           const Icon(Icons.autorenew, size: 14, color: Colors.white70),

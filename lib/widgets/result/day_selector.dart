@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../app/theme/app_theme.dart';
 import '../../app/theme/spacing.dart';
+import '../../app/theme/typography.dart';
 import '../../models/itinerary.dart';
 import '../../utils/haptics.dart';
 
@@ -81,7 +82,7 @@ class _CirclePill extends StatelessWidget {
         child: DefaultTextStyle(
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: TextStyle(color: textColor, fontWeight: FontWeight.w600, fontSize: 14),
+          style: AppTypography.chip.copyWith(color: textColor),
           child: IconTheme(data: IconThemeData(color: textColor, size: 15), child: child),
         ),
       ),

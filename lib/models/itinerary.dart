@@ -1,12 +1,23 @@
 import 'dart:convert';
 
-/// Ekvivalent Itinerary.swift.
-///
-/// NAPOMENA: `AIModel` enum nije uploadan (referenciran u iOS kodu kao
-/// `AIModel.mini.rawValue`) — koristim string placeholder 'gpt-4o-mini'
-/// dok ne vidimo pravi AIProxy/AIModel fajl. Zamijeni `kDefaultGeneratorModel`
-/// kad taj fajl stigne.
-const String kDefaultGeneratorModel = 'gpt-4o-mini';
+/// Ekvivalent AIModel enum-a iz MainView.swift (iOS):
+///   case mini = "gpt-5-mini"
+///   case pro  = "gpt-5.2"
+/// iOS bira između njih po free/paid statusu korisnika. Android trenutno
+/// FORSIRA `.pro` za sve korisnike (odluka korisnika, 2026-07-03) — kad
+/// stignemo do Faze 8 (monetizacija), ovdje se veže prava free/paid logika,
+/// vidi TODO u main_screen.dart handleGenerateTapped().
+enum AIModel {
+  mini('gpt-5-mini'),
+  pro('gpt-5.2');
+
+  const AIModel(this.rawValue);
+  final String rawValue;
+}
+
+/// Trenutno hardkodirano na .pro za SVE korisnike na Androidu (namjerna
+/// privremena odluka — iOS razlikuje free/paid, Android to još ne radi).
+const String kDefaultGeneratorModel = 'gpt-5.2'; // AIModel.pro.rawValue
 
 /// Ekvivalent DaySegmentKey + DayPart (iOS ima dva skoro identična enuma sa
 /// `.asDayPart` konverzijom) — u Dartu koristi se JEDAN enum svugdje.
@@ -47,7 +58,8 @@ enum TripPace {
 
   String toJson() => name;
 
-  /// Ekvivalent .localizedKey — koristi sa Flutter intl/l10n sistemom.
+  /// Ekvivalent .localizedKey iz Swift originala — trenutno se ne koristi,
+  /// app je engleski-only (nema l10n sistema, namjerna odluka).
   String get localizationKey => 'trip_pace_$name';
 
   String get promptDescription {
@@ -115,7 +127,8 @@ class PromptSnapshot {
         'languageCode': languageCode,
         'systemPrompt': systemPrompt,
         'userPrompt': userPrompt,
-        if (requestFingerprint != null) 'requestFingerprint': requestFingerprint,
+        if (requestFingerprint != null)
+          'requestFingerprint': requestFingerprint,
       };
 }
 
@@ -148,7 +161,8 @@ class ItineraryItem {
   }
 
   factory ItineraryItem.fromJson(Map<String, dynamic> json) {
-    final locationName = (json['locationName'] ?? json['location'] ?? json['place']) as String?;
+    final locationName =
+        (json['locationName'] ?? json['location'] ?? json['place']) as String?;
 
     double? lat = _asDouble(json['lat']) ?? _asDouble(json['latitude']);
     double? lon = _asDouble(json['lon']) ?? _asDouble(json['longitude']);
@@ -186,7 +200,8 @@ class DayBlock {
   final List<String> steps;
 
   static int _counter = 0;
-  static String _uuid() => 'block_${DateTime.now().microsecondsSinceEpoch}_${_counter++}';
+  static String _uuid() =>
+      'block_${DateTime.now().microsecondsSinceEpoch}_${_counter++}';
 
   factory DayBlock.fromJson(Map<String, dynamic> json) {
     return DayBlock(
@@ -218,9 +233,12 @@ class DayStructure {
   }
 
   Map<String, dynamic> toJson() => {
-        if (morning != null) 'morning': morning!.map((e) => e.toJson()).toList(),
-        if (afternoon != null) 'afternoon': afternoon!.map((e) => e.toJson()).toList(),
-        if (evening != null) 'evening': evening!.map((e) => e.toJson()).toList(),
+        if (morning != null)
+          'morning': morning!.map((e) => e.toJson()).toList(),
+        if (afternoon != null)
+          'afternoon': afternoon!.map((e) => e.toJson()).toList(),
+        if (evening != null)
+          'evening': evening!.map((e) => e.toJson()).toList(),
       };
 }
 
@@ -240,7 +258,8 @@ class DayVariant {
   factory DayVariant.fromJson(Map<String, dynamic> json) {
     return DayVariant(
       morning: ItineraryItem.fromJson(json['morning'] as Map<String, dynamic>),
-      afternoon: ItineraryItem.fromJson(json['afternoon'] as Map<String, dynamic>),
+      afternoon:
+          ItineraryItem.fromJson(json['afternoon'] as Map<String, dynamic>),
       evening: ItineraryItem.fromJson(json['evening'] as Map<String, dynamic>),
       dayStructure: json['dayStructure'] != null
           ? DayStructure.fromJson(json['dayStructure'] as Map<String, dynamic>)
@@ -314,20 +333,28 @@ class ItineraryDay {
     final afternoonVariants = json['afternoonVariants'] as List<dynamic>?;
     final eveningVariants = json['eveningVariants'] as List<dynamic>?;
 
-    if (morningVariants != null && afternoonVariants != null && eveningVariants != null) {
+    if (morningVariants != null &&
+        afternoonVariants != null &&
+        eveningVariants != null) {
       final structure = json['dayStructure'] != null
           ? DayStructure.fromJson(json['dayStructure'] as Map<String, dynamic>)
           : null;
 
-      final count = [morningVariants.length, afternoonVariants.length, eveningVariants.length]
-          .reduce((a, b) => a < b ? a : b);
+      final count = [
+        morningVariants.length,
+        afternoonVariants.length,
+        eveningVariants.length
+      ].reduce((a, b) => a < b ? a : b);
 
       final built = <DayVariant>[
         for (var i = 0; i < count; i++)
           DayVariant(
-            morning: ItineraryItem.fromJson(morningVariants[i] as Map<String, dynamic>),
-            afternoon: ItineraryItem.fromJson(afternoonVariants[i] as Map<String, dynamic>),
-            evening: ItineraryItem.fromJson(eveningVariants[i] as Map<String, dynamic>),
+            morning: ItineraryItem.fromJson(
+                morningVariants[i] as Map<String, dynamic>),
+            afternoon: ItineraryItem.fromJson(
+                afternoonVariants[i] as Map<String, dynamic>),
+            evening: ItineraryItem.fromJson(
+                eveningVariants[i] as Map<String, dynamic>),
             dayStructure: structure,
           ),
       ];
@@ -341,14 +368,20 @@ class ItineraryDay {
     }
 
     // 🔵 VRLO STARI FORMAT (pojedinačni morning/afternoon/evening)
-    final oldMorning = ItineraryItem.fromJson(json['morning'] as Map<String, dynamic>);
-    final oldAfternoon = ItineraryItem.fromJson(json['afternoon'] as Map<String, dynamic>);
-    final oldEvening = ItineraryItem.fromJson(json['evening'] as Map<String, dynamic>);
+    final oldMorning =
+        ItineraryItem.fromJson(json['morning'] as Map<String, dynamic>);
+    final oldAfternoon =
+        ItineraryItem.fromJson(json['afternoon'] as Map<String, dynamic>);
+    final oldEvening =
+        ItineraryItem.fromJson(json['evening'] as Map<String, dynamic>);
 
     return ItineraryDay(
       dayNumber: dayNumber,
       title: title,
-      variants: [DayVariant(morning: oldMorning, afternoon: oldAfternoon, evening: oldEvening)],
+      variants: [
+        DayVariant(
+            morning: oldMorning, afternoon: oldAfternoon, evening: oldEvening)
+      ],
       activeVariantIndex: json['activeVariantIndex'] as int? ?? 0,
     );
   }
@@ -386,7 +419,8 @@ class DriveLeg {
   final double? lon;
 
   static int _counter = 0;
-  static String _uuid() => 'leg_${DateTime.now().microsecondsSinceEpoch}_${_counter++}';
+  static String _uuid() =>
+      'leg_${DateTime.now().microsecondsSinceEpoch}_${_counter++}';
 
   factory DriveLeg.fromJson(Map<String, dynamic> json) {
     return DriveLeg(
@@ -420,8 +454,8 @@ enum DriveLegKind {
   stop,
   overnight;
 
-  static DriveLegKind fromJson(String raw) =>
-      DriveLegKind.values.firstWhere((e) => e.name == raw, orElse: () => DriveLegKind.drive);
+  static DriveLegKind fromJson(String raw) => DriveLegKind.values
+      .firstWhere((e) => e.name == raw, orElse: () => DriveLegKind.drive);
 
   String toJson() => name;
 }
@@ -452,7 +486,8 @@ class RoadTripDay {
       dayNumber: json['dayNumber'] as int,
       title: json['title'] as String?,
       morning: ItineraryItem.fromJson(json['morning'] as Map<String, dynamic>),
-      afternoon: ItineraryItem.fromJson(json['afternoon'] as Map<String, dynamic>),
+      afternoon:
+          ItineraryItem.fromJson(json['afternoon'] as Map<String, dynamic>),
       evening: ItineraryItem.fromJson(json['evening'] as Map<String, dynamic>),
       segments: (json['segments'] as List<dynamic>?)
           ?.map((e) => DriveLeg.fromJson(e as Map<String, dynamic>))
@@ -467,7 +502,8 @@ class RoadTripDay {
         'morning': morning.toJson(),
         'afternoon': afternoon.toJson(),
         'evening': evening.toJson(),
-        if (segments != null) 'segments': segments!.map((s) => s.toJson()).toList(),
+        if (segments != null)
+          'segments': segments!.map((s) => s.toJson()).toList(),
         if (subtitle != null) 'subtitle': subtitle,
       };
 }
@@ -580,7 +616,8 @@ class ItineraryResponse {
   final List<String>? interests;
 
   static int _counter = 0;
-  static String _uuid() => 'itin_${DateTime.now().microsecondsSinceEpoch}_${_counter++}';
+  static String _uuid() =>
+      'itin_${DateTime.now().microsecondsSinceEpoch}_${_counter++}';
 
   factory ItineraryResponse.fromJson(Map<String, dynamic> json) {
     return ItineraryResponse(
@@ -594,9 +631,11 @@ class ItineraryResponse {
       roadTrip: json['roadTrip'] != null
           ? RoadTripPlan.fromJson(json['roadTrip'] as Map<String, dynamic>)
           : null,
-      generatorModel: json['generatorModel'] as String? ?? kDefaultGeneratorModel,
+      generatorModel:
+          json['generatorModel'] as String? ?? kDefaultGeneratorModel,
       promptSnapshot: json['promptSnapshot'] != null
-          ? PromptSnapshot.fromJson(json['promptSnapshot'] as Map<String, dynamic>)
+          ? PromptSnapshot.fromJson(
+              json['promptSnapshot'] as Map<String, dynamic>)
           : null,
       status: PlanStatus.fromJson(json['status'] as String?),
       completedAt: json['completedAt'] != null

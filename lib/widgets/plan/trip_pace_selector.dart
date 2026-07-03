@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/theme/app_theme.dart';
 import '../../app/theme/spacing.dart';
+import '../../app/theme/typography.dart';
 import '../../models/itinerary.dart';
 import '../../providers/plan_config_provider.dart';
 import '../../utils/haptics.dart';
@@ -79,11 +80,7 @@ class _PaceButton extends StatelessWidget {
         child: Text(
           _label,
           textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-            color: color,
-          ),
+          style: AppTypography.chip.copyWith(color: color),
         ),
       ),
     );
