@@ -41,6 +41,14 @@ dependencies:
   http: ^1.2.0
   intl: ^0.19.0
   connectivity_plus: ^6.0.5     # NetworkMonitor ekvivalent (Faza 5)
+  pdf: ^3.12.0                   # PDF generisanje (itinerary export)
+  printing: ^5.13.1              # PDF preview/share helper (radi sa 'pdf')
+  # share_plus/printing zatraženi kao ^10.1.2/^5.13.4 — spušteno na najnoviju
+  # verziju kompatibilnu sa firebase_core ^2.27.0/firebase_auth ^4.17.4 (noviji
+  # share_plus/printing traže `web: ^1.0.0`, a stari Firebase paketi <0.5.0;
+  # nadogradnja Firebase-a je van obima ovog zadatka). API korišten ovdje
+  # (Share.share/Printing.sharePdf) je identičan u obje verzije.
+  share_plus: ^10.0.0            # native OS share sheet (link/tekst/fajlovi)
 
 dev_dependencies:
   flutter_test:

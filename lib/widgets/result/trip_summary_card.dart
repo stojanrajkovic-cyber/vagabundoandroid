@@ -73,12 +73,18 @@ class TripSummaryCard extends StatelessWidget {
           ),
           Padding(
             padding: const EdgeInsets.only(left: AppSpacing.sm),
-            // TODO: plan tools meni (Stay22, rent-a-car, packing guide) — van
-            // obima za Fazu 4, samo placeholder ikona za sada.
-            child: Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(color: context.accent.withValues(alpha: 0.10), shape: BoxShape.circle),
-              child: Icon(Icons.handyman_outlined, size: 18, color: context.accent.withValues(alpha: 0.4)),
+            child: Material(
+              color: Colors.transparent,
+              shape: const CircleBorder(),
+              child: InkWell(
+                customBorder: const CircleBorder(),
+                onTap: () => _showPlanToolsSheet(context),
+                child: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(color: context.accent.withValues(alpha: 0.10), shape: BoxShape.circle),
+                  child: Icon(Icons.handyman_outlined, size: 18, color: context.accent),
+                ),
+              ),
             ),
           ),
         ],
@@ -95,5 +101,80 @@ class TripSummaryCard extends StatelessWidget {
       case TripPace.packed:
         return 'Packed';
     }
+  }
+
+  /// TODO: prava Plan Tools funkcionalnost (Stay22 smještaj, rent-a-car,
+  /// rent-a-bike integracije) — van obima za sada, ovo je samo UI
+  /// acknowledgment da dugme "radi" umjesto da izgleda mrtvo/pokvareno.
+  /// Packing guide je SLJEDEĆI veliki zadatak, poseban prompt.
+  void _showPlanToolsSheet(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      useRootNavigator: true,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const _PlanToolsSheet(),
+    );
+  }
+}
+
+class _PlanToolsSheet extends StatelessWidget {
+  const _PlanToolsSheet();
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+        decoration: BoxDecoration(
+          color: context.cardBackground,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSpacing.cardRadius)),
+          border: Border.all(color: context.cardStroke),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+              decoration: BoxDecoration(
+                color: context.cardStroke,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Plan tools',
+                  style: AppTypography.sectionTitle.copyWith(color: context.textPrimary),
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            const ListTile(
+              leading: Icon(Icons.bed_outlined),
+              title: Text('Find accommodation'),
+              trailing: Text('Coming soon', style: TextStyle(fontSize: 11)),
+              enabled: false,
+            ),
+            const ListTile(
+              leading: Icon(Icons.directions_car_outlined),
+              title: Text('Rent a car'),
+              trailing: Text('Coming soon', style: TextStyle(fontSize: 11)),
+              enabled: false,
+            ),
+            const ListTile(
+              leading: Icon(Icons.pedal_bike_outlined),
+              title: Text('Rent a bike'),
+              trailing: Text('Coming soon', style: TextStyle(fontSize: 11)),
+              enabled: false,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

@@ -3,18 +3,26 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:printing/printing.dart';
+import 'package:share_plus/share_plus.dart';
 
+import '../../app/theme/app_theme.dart';
 import '../../app/theme/spacing.dart';
+import '../../app/theme/typography.dart';
 import '../../models/itinerary.dart';
 import '../../models/plan_document.dart';
 import '../../providers/ai_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/share_link_provider.dart';
 import '../../services/firestore/firestore_service.dart';
+import '../../services/share/itinerary_pdf_generator.dart';
+import '../../services/share/itinerary_text_formatter.dart';
+import '../../services/share/share_link_service.dart';
 import '../../widgets/result/day_card.dart';
 import '../../widgets/result/day_selector.dart';
 import '../../widgets/result/road_trip_section.dart';
 import '../../widgets/result/trip_summary_card.dart';
+import '../../widgets/result/weather_card.dart';
 import '../../widgets/share/manage_share_link_sheet.dart';
 
 /// Argumenti za '/result' rutu kad se otvara iz Saved Plans (Faza 5) — vidi
@@ -86,9 +94,21 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
   bool _isGeneratingAltVariant = false;
   int? _generatingAltDayNumber;
   bool _readyToPop = false;
-  bool _isLoadingShare = false;
+  bool _isShareActionInProgress = false;
 
   bool get _isSavedPlan => widget.planId != null;
+
+  /// dayNumber trenutno prikazanog dana (za WeatherCard) — kad je selektovana
+  /// road trip pregled stranica (nema konkretan dan), fallback na prvi dan.
+  int get _currentDayNumber {
+    final hasRoadTrip = _workingItinerary.roadTrip != null;
+    final baseIndex = hasRoadTrip ? 1 : 0;
+    final dayIndex = _selectedPageIndex - baseIndex;
+    if (dayIndex < 0 || dayIndex >= _workingItinerary.days.length) {
+      return _workingItinerary.days.isNotEmpty ? _workingItinerary.days.first.dayNumber : 1;
+    }
+    return _workingItinerary.days[dayIndex].dayNumber;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -106,15 +126,15 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
           title: Text(_workingItinerary.city.isEmpty ? 'Itinerary' : _workingItinerary.city),
           actions: [
             IconButton(
-              icon: _isLoadingShare
+              icon: _isShareActionInProgress
                   ? const SizedBox(
                       width: 18,
                       height: 18,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.share_outlined),
-              tooltip: widget.planId == null ? 'Save the plan first' : 'Share plan',
-              onPressed: widget.planId == null || _isLoadingShare ? null : _handleShareTapped,
+              tooltip: 'Share plan',
+              onPressed: _isShareActionInProgress ? null : _showShareOptionsSheet,
             ),
             if (widget.showMarkCompleted)
               IconButton(
@@ -131,6 +151,18 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
               children: [
                 const SizedBox(height: AppSpacing.md),
                 TripSummaryCard(itinerary: _workingItinerary),
+                if (_workingItinerary.cityLat != null && _workingItinerary.cityLon != null) ...[
+                  const SizedBox(height: AppSpacing.lg),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                    child: WeatherCard(
+                      lat: _workingItinerary.cityLat!,
+                      lon: _workingItinerary.cityLon!,
+                      city: _workingItinerary.city,
+                      dayNumber: _currentDayNumber,
+                    ),
+                  ),
+                ],
                 const SizedBox(height: AppSpacing.lg),
                 DaySelector(
                   itinerary: _workingItinerary,
@@ -232,18 +264,76 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
     });
   }
 
-  Future<void> _handleShareTapped() async {
+  /// Ekvivalent Share menija iz ResultView.swift — "Share link" (public
+  /// link preko ShareLinkService), "Manage link" (postojeći toggle/delete
+  /// sheet iz Faze 5), i "Share as text"/"Share as PDF" (novi export-i, ne
+  /// zahtijevaju planId jer rade direktno nad ItineraryResponse objektom).
+  Future<void> _showShareOptionsSheet() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      useRootNavigator: true,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => _ShareOptionsSheet(
+        canShareLink: widget.planId != null,
+        onShareLink: () {
+          Navigator.of(sheetContext).pop();
+          _handleShareLink();
+        },
+        onManageLink: () {
+          Navigator.of(sheetContext).pop();
+          _handleManageLink();
+        },
+        onShareAsText: () {
+          Navigator.of(sheetContext).pop();
+          _handleShareAsText();
+        },
+        onShareAsPdf: () {
+          Navigator.of(sheetContext).pop();
+          _handleShareAsPdf();
+        },
+      ),
+    );
+  }
+
+  Future<ShareInfo?> _ensureShareInfo() async {
     final planId = widget.planId;
-    if (planId == null) return;
+    if (planId == null) return null;
 
     final uid = ref.read(authStateProvider).asData?.value?.uid;
-    if (uid == null) return;
+    if (uid == null) return null;
 
-    setState(() => _isLoadingShare = true);
+    return ref.read(shareLinkServiceProvider).createOrGetShareForPlan(uid: uid, planId: planId);
+  }
+
+  /// 1a — stvarno slanje public link-a preko native share sheet-a.
+  ///
+  /// TODO: potvrdi tačan javni URL format sa korisnikom — ovo je
+  /// pretpostavka (nema deep link/universal link resolver-a još, vidi
+  /// ShareLinkResolverService napomenu u Fazi 5 prompt-u), provjeri da li
+  /// postoji stvarna web stranica koja rezolvira share token.
+  Future<void> _handleShareLink() async {
+    setState(() => _isShareActionInProgress = true);
     try {
-      final info = await ref
-          .read(shareLinkServiceProvider)
-          .createOrGetShareForPlan(uid: uid, planId: planId);
+      final info = await _ensureShareInfo();
+      if (info == null) return;
+      final url = 'https://vagabundo.app/shared/${info.id}';
+      await Share.share(url, subject: 'Check out my trip to ${_workingItinerary.city}!');
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not create share link: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _isShareActionInProgress = false);
+    }
+  }
+
+  Future<void> _handleManageLink() async {
+    setState(() => _isShareActionInProgress = true);
+    try {
+      final info = await _ensureShareInfo();
+      if (info == null) return;
       if (!mounted) return;
       await showModalBottomSheet<void>(
         context: context,
@@ -258,7 +348,28 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
         SnackBar(content: Text('Could not create share link: $e')),
       );
     } finally {
-      if (mounted) setState(() => _isLoadingShare = false);
+      if (mounted) setState(() => _isShareActionInProgress = false);
+    }
+  }
+
+  /// 1b — plain-text export preko native share sheet-a.
+  Future<void> _handleShareAsText() async {
+    await Share.share(ItineraryTextFormatter.format(_workingItinerary));
+  }
+
+  /// 1c — PDF export preko `printing` paketa (interno koristi share_plus).
+  Future<void> _handleShareAsPdf() async {
+    setState(() => _isShareActionInProgress = true);
+    try {
+      final bytes = await ItineraryPdfGenerator.generate(_workingItinerary);
+      await Printing.sharePdf(bytes: bytes, filename: '${_workingItinerary.city}_itinerary.pdf');
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not generate PDF: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _isShareActionInProgress = false);
     }
   }
 
@@ -295,5 +406,101 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
     } catch (_) {
       // TODO Faza 5: prikaži grešku korisniku / retry umjesto tihog gutanja.
     }
+  }
+}
+
+/// Action sheet za sve share opcije (dodatak nakon Faze 5) — "Share link"/
+/// "Manage link" trebaju sačuvan plan (planId), "Share as text"/"Share as PDF"
+/// rade nad bilo kojim ItineraryResponse objektom bez obzira da li je sačuvan.
+class _ShareOptionsSheet extends StatelessWidget {
+  const _ShareOptionsSheet({
+    required this.canShareLink,
+    required this.onShareLink,
+    required this.onManageLink,
+    required this.onShareAsText,
+    required this.onShareAsPdf,
+  });
+
+  final bool canShareLink;
+  final VoidCallback onShareLink;
+  final VoidCallback onManageLink;
+  final VoidCallback onShareAsText;
+  final VoidCallback onShareAsPdf;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+        decoration: BoxDecoration(
+          color: context.cardBackground,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSpacing.cardRadius)),
+          border: Border.all(color: context.cardStroke),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+              decoration: BoxDecoration(
+                color: context.cardStroke,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Share plan',
+                  style: AppTypography.sectionTitle.copyWith(color: context.textPrimary),
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            ListTile(
+              leading: Icon(Icons.link, color: canShareLink ? context.accent : context.textSecondary),
+              title: Text(
+                'Share link',
+                style: AppTypography.body.copyWith(
+                  color: canShareLink ? context.textPrimary : context.textSecondary,
+                ),
+              ),
+              trailing: canShareLink
+                  ? null
+                  : Text('Save the plan first', style: AppTypography.fieldLabel.copyWith(color: context.textSecondary)),
+              enabled: canShareLink,
+              onTap: canShareLink ? onShareLink : null,
+            ),
+            ListTile(
+              leading: Icon(Icons.tune, color: canShareLink ? context.accent : context.textSecondary),
+              title: Text(
+                'Manage link',
+                style: AppTypography.body.copyWith(
+                  color: canShareLink ? context.textPrimary : context.textSecondary,
+                ),
+              ),
+              trailing: canShareLink
+                  ? null
+                  : Text('Save the plan first', style: AppTypography.fieldLabel.copyWith(color: context.textSecondary)),
+              enabled: canShareLink,
+              onTap: canShareLink ? onManageLink : null,
+            ),
+            ListTile(
+              leading: Icon(Icons.text_snippet_outlined, color: context.accent),
+              title: Text('Share as text', style: AppTypography.body.copyWith(color: context.textPrimary)),
+              onTap: onShareAsText,
+            ),
+            ListTile(
+              leading: Icon(Icons.picture_as_pdf_outlined, color: context.accent),
+              title: Text('Share as PDF', style: AppTypography.body.copyWith(color: context.textPrimary)),
+              onTap: onShareAsPdf,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
