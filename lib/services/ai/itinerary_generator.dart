@@ -93,7 +93,8 @@ class CloudItineraryGenerator implements ItineraryGenerator {
       completedAt: result.completedAt,
       summary: result.summary,
       pace: result.pace,
-      interests: result.interests,
+      interests: req.interests,
+      withKids: req.withKids,
     );
 
     result = _normalizeInitial(result);
@@ -197,6 +198,7 @@ STRICT RULES:
       summary: res.summary,
       pace: res.pace,
       interests: res.interests,
+      withKids: res.withKids,
     );
   }
 

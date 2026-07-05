@@ -1,0 +1,51 @@
+/// App je engleski-only, pa umjesto LocalizedStringKey (iOS), direktan string mapping.
+class PackingItemLabels {
+  PackingItemLabels._();
+
+  static const Map<String, String> _labels = {
+    'prep_underwear': 'Underwear',
+    'prep_tshirts': 'T-shirts',
+    'prep_warm_coat': 'Warm coat',
+    'prep_sweater': 'Sweater',
+    'prep_gloves': 'Gloves',
+    'prep_beanie': 'Beanie',
+    'prep_light_clothes': 'Light clothes',
+    'prep_hat': 'Hat',
+    'prep_sunglasses': 'Sunglasses',
+    'prep_swimsuit': 'Swimsuit',
+    'prep_rain_jacket': 'Rain jacket',
+    'prep_umbrella': 'Umbrella',
+    'prep_sunscreen': 'Sunscreen',
+    'prep_water_bottle': 'Water bottle',
+    'prep_lip_balm': 'Lip balm',
+    'prep_comfortable_shoes': 'Comfortable shoes',
+    'prep_flip_flops': 'Flip flops',
+    'prep_boots': 'Boots',
+    'prep_id_passport': 'ID / passport',
+    'prep_tickets_reservations': 'Tickets & reservations',
+    'prep_toothbrush': 'Toothbrush',
+    'prep_basic_toiletries': 'Basic toiletries',
+    'prep_hand_sanitizer': 'Hand sanitizer',
+    'prep_phone_charger': 'Phone charger',
+    'prep_power_bank': 'Power bank',
+    'prep_travel_adapter': 'Travel adapter',
+    'prep_camera': 'Camera',
+    'prep_car_charger': 'Car charger',
+    'prep_snacks': 'Snacks',
+    'prep_blister_patches': 'Blister patches',
+    'prep_basic_medicine': 'Basic medicine',
+    'prep_kids_snacks': "Kids' snacks",
+    'prep_small_toys': 'Small toys',
+    'prep_wipes': 'Wipes',
+    'prep_hiking_shoes': 'Hiking shoes',
+    'prep_daypack': 'Daypack',
+    'prep_swimwear': 'Swimwear',
+    'prep_extra_memory': 'Extra memory card',
+    'prep_portable_charger': 'Portable charger',
+    'prep_food_reservations': 'Restaurant reservations',
+    'prep_evening_outfit': 'Evening outfit',
+    'prep_extra_luggage': 'Extra luggage space',
+  };
+
+  static String labelFor(String key) => _labels[key] ?? key;
+}

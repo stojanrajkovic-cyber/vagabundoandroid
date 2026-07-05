@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../app/language.dart';
 import '../models/interest.dart';
 import '../models/itinerary.dart';
 import '../services/interests/interests_service.dart';
@@ -121,7 +122,7 @@ class PlanConfigNotifier extends StateNotifier<PlanConfigState> {
     await prefs.setString(_customInterestsPrefsKey, jsonEncode(state.customInterestMap));
   }
 
-  Future<void> loadInterestsIfNeeded({int randomLimit = 12, String lang = 'en'}) async {
+  Future<void> loadInterestsIfNeeded({int randomLimit = 12, String lang = kAppLanguageCode}) async {
     if (state.allInterests.isNotEmpty) return;
     try {
       final items = await _interestsService.fetchRandom(lang: lang, limit: randomLimit);
@@ -134,7 +135,7 @@ class PlanConfigNotifier extends StateNotifier<PlanConfigState> {
 
   /// Ekvivalent refreshRandomInterests — zadržava selektovane sistemske
   /// interese, osvježava samo neselektovani pool.
-  Future<void> refreshRandomInterests({int limit = 12, String lang = 'en'}) async {
+  Future<void> refreshRandomInterests({int limit = 12, String lang = kAppLanguageCode}) async {
     try {
       final fresh = await _interestsService.fetchRandom(lang: lang, limit: limit);
 

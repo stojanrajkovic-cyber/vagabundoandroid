@@ -10,11 +10,14 @@ import '../../app/theme/app_theme.dart';
 import '../../app/theme/spacing.dart';
 import '../../app/theme/typography.dart';
 import '../../models/itinerary.dart';
+import '../../models/packing_guide.dart';
 import '../../models/plan_document.dart';
 import '../../providers/ai_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/share_link_provider.dart';
+import '../../providers/weather_provider.dart';
 import '../../services/firestore/firestore_service.dart';
+import '../../services/packing/packing_generator_service.dart';
 import '../../services/share/itinerary_pdf_generator.dart';
 import '../../services/share/itinerary_text_formatter.dart';
 import '../../services/share/share_link_service.dart';
@@ -24,6 +27,7 @@ import '../../widgets/result/road_trip_section.dart';
 import '../../widgets/result/trip_summary_card.dart';
 import '../../widgets/result/weather_card.dart';
 import '../../widgets/share/manage_share_link_sheet.dart';
+import '../packing/packing_guide_screen.dart';
 
 /// Argumenti za '/result' rutu kad se otvara iz Saved Plans (Faza 5) — vidi
 /// router.dart. Svježe generisan plan (Faza 3/4 flow) i dalje prosljeđuje
@@ -95,6 +99,7 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
   int? _generatingAltDayNumber;
   bool _readyToPop = false;
   bool _isShareActionInProgress = false;
+  bool _isPackingActionInProgress = false;
 
   bool get _isSavedPlan => widget.planId != null;
 
@@ -151,6 +156,15 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
               children: [
                 const SizedBox(height: AppSpacing.md),
                 TripSummaryCard(itinerary: _workingItinerary),
+                const SizedBox(height: AppSpacing.lg),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                  child: _PackingGuideRow(
+                    enabled: _isSavedPlan && !_isPackingActionInProgress,
+                    isLoading: _isPackingActionInProgress,
+                    onTap: _handleGeneratePackingGuide,
+                  ),
+                ),
                 if (_workingItinerary.cityLat != null && _workingItinerary.cityLon != null) ...[
                   const SizedBox(height: AppSpacing.lg),
                   Padding(
@@ -368,6 +382,88 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
     }
   }
 
+  /// Ekvivalent "Generate packing guide" flow-a iz Faze 6:
+  /// 1) ako plan nije sačuvan (planId == null), samo prikaži hint.
+  /// 2) ako VEĆ postoji sačuvan guide, otvori ga direktno (bez regenerisanja).
+  /// 3) inače traži start datum pa generiše preko PackingGeneratorService.
+  Future<void> _handleGeneratePackingGuide() async {
+    final planId = widget.planId;
+    if (planId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Save the plan first')),
+      );
+      return;
+    }
+
+    final uid = ref.read(authStateProvider).asData?.value?.uid;
+    if (uid == null) return;
+
+    setState(() => _isPackingActionInProgress = true);
+    try {
+      final existing = await FirestoreService.instance.loadPackingGuide(uid: uid, planId: planId);
+      if (!mounted) return;
+      if (existing != null) {
+        await _openPackingGuideScreen(uid: uid, planId: planId, guide: existing);
+        return;
+      }
+
+      final startDate = await showDatePicker(
+        context: context,
+        initialDate: DateTime.now(),
+        firstDate: DateTime.now(),
+        lastDate: DateTime.now().add(const Duration(days: 365)),
+      );
+      if (startDate == null) return;
+
+      final cityLat = _workingItinerary.cityLat;
+      final cityLon = _workingItinerary.cityLon;
+      if (cityLat == null || cityLon == null) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Missing city coordinates — cannot generate packing guide')),
+        );
+        return;
+      }
+
+      final dayCount = _workingItinerary.days.length;
+      final endDate = startDate.add(Duration(days: dayCount > 0 ? dayCount - 1 : 0));
+
+      final guide = await PackingGeneratorService.generate(
+        itinerary: _workingItinerary,
+        startDate: startDate,
+        endDate: endDate,
+        cityLat: cityLat,
+        cityLon: cityLon,
+        weatherService: ref.read(weatherServiceProvider),
+      );
+
+      if (!mounted) return;
+      await _openPackingGuideScreen(uid: uid, planId: planId, guide: guide);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not generate packing guide: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _isPackingActionInProgress = false);
+    }
+  }
+
+  Future<void> _openPackingGuideScreen({
+    required String uid,
+    required String planId,
+    required PackingGuide guide,
+  }) async {
+    await Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (_) => PackingGuideScreen(
+        guide: guide,
+        onUpdate: (updated) {
+          FirestoreService.instance.savePackingGuide(uid: uid, planId: planId, guide: updated);
+        },
+      ),
+    ));
+  }
+
   Future<void> _handlePopAttempt() async {
     await _persistOnClose();
     if (!mounted) return;
@@ -498,6 +594,60 @@ class _ShareOptionsSheet extends StatelessWidget {
               onTap: onShareAsPdf,
             ),
           ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// "Generate packing guide" red — gating identičan share dugmetu (Faza 5
+/// dodatak): svjež, nesačuvan plan (planId == null) prikazuje "Save the
+/// plan first" hint umjesto dugmeta koje ne radi ništa.
+class _PackingGuideRow extends StatelessWidget {
+  const _PackingGuideRow({required this.enabled, required this.isLoading, required this.onTap});
+
+  final bool enabled;
+  final bool isLoading;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: context.cardBackground,
+      borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+        onTap: enabled ? onTap : null,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+            border: Border.all(color: context.cardStroke),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.card_travel, color: enabled ? context.accent : context.textSecondary),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Text(
+                  'Generate packing guide',
+                  style: AppTypography.body.copyWith(
+                    color: enabled ? context.textPrimary : context.textSecondary,
+                  ),
+                ),
+              ),
+              if (isLoading)
+                const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              else if (!enabled)
+                Text('Save the plan first', style: AppTypography.fieldLabel.copyWith(color: context.textSecondary))
+              else
+                Icon(Icons.chevron_right, color: context.textSecondary),
+            ],
           ),
         ),
       ),

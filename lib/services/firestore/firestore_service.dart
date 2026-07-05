@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 
 import '../../models/itinerary.dart';
+import '../../models/packing_guide.dart';
 import '../../models/plan_document.dart';
 
 class MonetizationSnapshot {
@@ -14,53 +15,6 @@ class MonetizationSnapshot {
 
   final int freePlansRemaining;
   final int paidPlansCount;
-}
-
-class PackingItem {
-  const PackingItem({
-    required this.id,
-    required this.category,
-    this.key,
-    this.title,
-    this.isCustom = false,
-    this.isChecked = false,
-  });
-
-  final String id;
-  final String category;
-  final String? key;
-  final String? title;
-  final bool isCustom;
-  final bool isChecked;
-
-  factory PackingItem.fromMap(Map<String, dynamic> item) {
-    return PackingItem(
-      id: item['id'] as String? ?? '',
-      category: item['category'] as String? ?? 'clothing',
-      key: item['key'] as String?,
-      title: item['title'] as String?,
-      isCustom: item['isCustom'] as bool? ?? false,
-      isChecked: item['isChecked'] as bool? ?? false,
-    );
-  }
-
-  Map<String, dynamic> toMap() => {
-        'id': id,
-        'category': category,
-        if (key != null) 'key': key,
-        if (title != null) 'title': title,
-        'isChecked': isChecked,
-        'isCustom': isCustom,
-      };
-}
-
-class PackingGuide {
-  const PackingGuide(
-      {required this.startDate, required this.endDate, required this.items});
-
-  final DateTime startDate;
-  final DateTime endDate;
-  final List<PackingItem> items;
 }
 
 /// Ekvivalent FirestoreService.swift (singleton preko Riverpod providera,
@@ -461,9 +415,12 @@ class FirestoreService {
     final ref = _plansCol(uid).doc(planId).collection('packing').doc('guide');
 
     await ref.set({
+      'id': guide.id,
       'startDate': Timestamp.fromDate(guide.startDate),
       'endDate': Timestamp.fromDate(guide.endDate),
       'items': guide.items.map((i) => i.toMap()).toList(),
+      if (guide.notes != null) 'notes': guide.notes,
+      'createdAt': Timestamp.fromDate(guide.createdAt),
       'updatedAt': FieldValue.serverTimestamp(),
     });
   }
@@ -477,15 +434,19 @@ class FirestoreService {
 
     final startTs = data['startDate'];
     final endTs = data['endDate'];
+    final createdTs = data['createdAt'];
 
     final items = (data['items'] as List<dynamic>? ?? [])
         .map((e) => PackingItem.fromMap(e as Map<String, dynamic>))
         .toList();
 
     return PackingGuide(
+      id: data['id'] as String?,
       startDate: startTs is Timestamp ? startTs.toDate() : DateTime.now(),
       endDate: endTs is Timestamp ? endTs.toDate() : DateTime.now(),
       items: items,
+      notes: data['notes'] as String?,
+      createdAt: createdTs is Timestamp ? createdTs.toDate() : DateTime.now(),
     );
   }
 }

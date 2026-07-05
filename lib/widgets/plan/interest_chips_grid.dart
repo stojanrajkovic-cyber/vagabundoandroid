@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../app/language.dart';
 import '../../app/theme/app_theme.dart';
 import '../../app/theme/spacing.dart';
 import '../../app/theme/typography.dart';
@@ -13,7 +14,7 @@ import '../pill_chip.dart';
 /// za uklanjanje). "Add custom interest" otvara bottom sheet sa comma-separated
 /// unosom (ekvivalent AddInterestsSheet).
 class InterestChipsGrid extends ConsumerWidget {
-  const InterestChipsGrid({super.key, this.languageCode = 'en'});
+  const InterestChipsGrid({super.key, this.languageCode = kAppLanguageCode});
 
   final String languageCode;
 

@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/language.dart';
 import '../../app/theme/app_theme.dart';
 import '../../app/theme/spacing.dart';
 import '../../app/theme/typography.dart';
@@ -64,8 +65,8 @@ class _MainScreenState extends ConsumerState<MainScreen> {
 
   void _loadInitialData() {
     ref.read(locationSelectionProvider.notifier).loadCountriesIfNeeded();
-    final lang = Localizations.localeOf(context).languageCode;
-    ref.read(planConfigProvider.notifier).loadInterestsIfNeeded(lang: lang);
+    // kAppLanguageCode, NE device locale — vidi lib/app/language.dart.
+    ref.read(planConfigProvider.notifier).loadInterestsIfNeeded(lang: kAppLanguageCode);
   }
 
   void _onScroll() {
@@ -83,7 +84,10 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   Widget build(BuildContext context) {
     final location = ref.watch(locationSelectionProvider);
     final config = ref.watch(planConfigProvider);
-    final languageCode = Localizations.localeOf(context).languageCode;
+    // Jezik SADRŽAJA itinerara (šalje se LLM-u) — namjerno device locale,
+    // NIJE isto što i kAppLanguageCode (koji je samo za interese, vidi
+    // lib/app/language.dart).
+    final contentLanguageCode = Localizations.localeOf(context).languageCode;
 
     final inputsReady = location.selectedCountry != null &&
         location.selectedCity != null &&
@@ -125,13 +129,13 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                     const SizedBox(height: AppSpacing.lg),
                     const TripPaceSelector(),
                     const SizedBox(height: AppSpacing.lg),
-                    InterestChipsGrid(languageCode: languageCode),
+                    const InterestChipsGrid(languageCode: kAppLanguageCode),
                     const SizedBox(height: AppSpacing.lg),
                     PrimaryButton(
                       label: 'Generate plan',
                       isLoading: _isGenerating,
                       onPressed: inputsReady && !_isGenerating
-                          ? () => _handleGenerateTapped(languageCode)
+                          ? () => _handleGenerateTapped(contentLanguageCode)
                           : null,
                     ),
                   ]),
@@ -202,12 +206,15 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       cityLat: city.lat,
       cityLon: city.lon,
       tripPace: config.tripPace,
+      // kAppLanguageCode, NE `languageCode` (device locale) — interesi se
+      // MORAJU snimiti na engleskom, vidi lib/app/language.dart.
       interests:
-          ref.read(planConfigProvider.notifier).selectedLabels(languageCode),
+          ref.read(planConfigProvider.notifier).selectedLabels(kAppLanguageCode),
       byCar: config.byCar,
       originName: originName,
       originLat: originLat,
       originLon: originLon,
+      withKids: config.withKids,
     );
 
     // TODO Faza 8: purchase gating (PurchaseManager.canGeneratePlan / kupovina

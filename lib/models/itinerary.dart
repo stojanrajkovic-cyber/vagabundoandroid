@@ -563,6 +563,7 @@ class ItineraryRequest {
     this.originName,
     this.originLat,
     this.originLon,
+    this.withKids = false,
   });
 
   final String country;
@@ -580,6 +581,7 @@ class ItineraryRequest {
   final String? originName;
   final double? originLat;
   final double? originLon;
+  final bool withKids;
 }
 
 /// Ekvivalent ItineraryResponse (glavni model).
@@ -598,6 +600,7 @@ class ItineraryResponse {
     this.summary,
     this.pace,
     this.interests,
+    this.withKids = false,
   }) : id = _uuid();
 
   final String id;
@@ -614,6 +617,7 @@ class ItineraryResponse {
   final String? summary;
   final TripPace? pace;
   final List<String>? interests;
+  final bool withKids;
 
   static int _counter = 0;
   static String _uuid() =>
@@ -644,6 +648,7 @@ class ItineraryResponse {
       summary: json['summary'] as String?,
       pace: TripPace.fromJson(json['pace'] as String?),
       interests: (json['interests'] as List<dynamic>?)?.cast<String>(),
+      withKids: json['withKids'] as bool? ?? false,
     );
   }
 
@@ -673,5 +678,6 @@ class ItineraryResponse {
         if (summary != null) 'summary': summary,
         if (pace != null) 'pace': pace!.toJson(),
         if (interests != null) 'interests': interests,
+        'withKids': withKids,
       };
 }
