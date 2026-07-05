@@ -36,7 +36,8 @@ class WeatherService {
   /// funkcija — non-200 baca exception (poziva se hvata na strani providera
   /// preko FutureProvider AsyncValue), parse greška vraća [] umjesto da
   /// sruši ResultScreen.
-  Future<List<DayWeather>> fetchForecast({required double lat, required double lon}) async {
+  Future<List<DayWeather>> fetchForecast(
+      {required double lat, required double lon}) async {
     final uri = Uri.parse(_baseUrl).replace(queryParameters: {
       'latitude': lat.toString(),
       'longitude': lon.toString(),
@@ -56,27 +57,40 @@ class WeatherService {
       final daily = decoded['daily'] as Map<String, dynamic>;
 
       final dates = (daily['time'] as List<dynamic>).cast<String>();
-      final codes = (daily['weather_code'] as List<dynamic>).cast<num>();
-      final tempMax = (daily['temperature_2m_max'] as List<dynamic>).cast<num>();
-      final tempMin = (daily['temperature_2m_min'] as List<dynamic>).cast<num>();
-      final feelsLikeMax = (daily['apparent_temperature_max'] as List<dynamic>).cast<num>();
-      final precipProb = (daily['precipitation_probability_max'] as List<dynamic>).cast<num>();
-      final windSpeed = (daily['wind_speed_10m_max'] as List<dynamic>).cast<num>();
+      final codes = daily['weather_code'] as List<dynamic>;
+      final tempMax = daily['temperature_2m_max'] as List<dynamic>;
+      final tempMin = daily['temperature_2m_min'] as List<dynamic>;
+      final feelsLikeMax = daily['apparent_temperature_max'] as List<dynamic>;
+      final precipProb =
+          daily['precipitation_probability_max'] as List<dynamic>;
+      final windSpeed = daily['wind_speed_10m_max'] as List<dynamic>;
+
+      // Open-Meteo NE garantuje vrijednost za svako polje na svih 16 dana
+      // (npr. precipitation_probability_max/apparent_temperature_max znaju
+      // biti null za dane dalje u budućnosti) — parsiraj null-safe po
+      // elementu, sa razumnim fallback-om, umjesto .cast<num>() koji puca
+      // na PRVI null u cijelom nizu.
+      double asDouble(dynamic v, [double fallback = 0]) =>
+          v == null ? fallback : (v as num).toDouble();
+      int asInt(dynamic v, [int fallback = 0]) =>
+          v == null ? fallback : (v as num).toInt();
 
       final count = dates.length;
       return [
         for (var i = 0; i < count; i++)
           DayWeather(
             date: DateTime.parse(dates[i]),
-            weatherCode: codes[i].toInt(),
-            tempMaxC: tempMax[i].toDouble(),
-            tempMinC: tempMin[i].toDouble(),
-            feelsLikeMaxC: feelsLikeMax[i].toDouble(),
-            precipitationProbability: precipProb[i].toInt(),
-            windSpeedKmh: windSpeed[i].toDouble(),
+            weatherCode: asInt(codes[i]),
+            tempMaxC: asDouble(tempMax[i]),
+            tempMinC: asDouble(tempMin[i]),
+            feelsLikeMaxC: asDouble(feelsLikeMax[i], asDouble(tempMax[i])),
+            precipitationProbability: asInt(precipProb[i]),
+            windSpeedKmh: asDouble(windSpeed[i]),
           ),
       ];
-    } catch (_) {
+    } catch (e) {
+      // ignore: avoid_print
+      print('🌤️ WeatherService parse error: $e');
       return [];
     }
   }
