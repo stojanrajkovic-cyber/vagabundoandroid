@@ -8,15 +8,19 @@ import '../../app/theme/spacing.dart';
 import '../../app/theme/typography.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/primary_button.dart';
+import '../../widgets/profile/section_card.dart';
 
 /// Ekvivalent SignInSignUpView.swift.
 /// Prikazuje se u /profile tabu kad `session.isAuthenticated == false`.
+///
+/// REDIZAJN: koristi SectionCard (VEĆ POSTOJI, Faza 7) za formu — isti
+/// vizuelni jezik kao Settings/Profile umjesto plosnatih default Material
+/// input polja/dugmadi od ranije.
 class SignInSignUpScreen extends ConsumerStatefulWidget {
   const SignInSignUpScreen({super.key});
 
   @override
-  ConsumerState<SignInSignUpScreen> createState() =>
-      _SignInSignUpScreenState();
+  ConsumerState<SignInSignUpScreen> createState() => _SignInSignUpScreenState();
 }
 
 class _SignInSignUpScreenState extends ConsumerState<SignInSignUpScreen> {
@@ -128,6 +132,36 @@ class _SignInSignUpScreenState extends ConsumerState<SignInSignUpScreen> {
     }
   }
 
+  InputDecoration _fieldDecoration(
+    BuildContext context, {
+    required String label,
+    Widget? suffixIcon,
+  }) {
+    return InputDecoration(
+      labelText: label,
+      filled: true,
+      fillColor: context.cardBackground,
+      suffixIcon: suffixIcon,
+      labelStyle: AppTypography.body.copyWith(color: context.textSecondary),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+        borderSide: BorderSide(color: context.cardStroke),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+        borderSide: BorderSide(color: context.cardStroke),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+        borderSide: BorderSide(color: context.accent, width: 1.5),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+        borderSide: const BorderSide(color: Colors.red),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final canSubmit = _acceptedTos && _acceptedPrivacy;
@@ -141,90 +175,110 @@ class _SignInSignUpScreenState extends ConsumerState<SignInSignUpScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const SizedBox(height: AppSpacing.xxl),
+                const SizedBox(height: AppSpacing.xl),
                 Text(
                   _isSignUp ? 'Create account' : 'Welcome back',
-                  style: AppTypography.heroTitle.copyWith(color: Theme.of(context).colorScheme.onSurface),
+                  style: AppTypography.heroTitle
+                      .copyWith(color: context.textPrimary),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 Text(
                   'Sign in to save your travel plans.',
-                  style: AppTypography.body.copyWith(color: Theme.of(context).colorScheme.onSurface),
+                  style:
+                      AppTypography.body.copyWith(color: context.textSecondary),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: AppSpacing.xl),
-                TextFormField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  autocorrect: false,
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
-                    border: OutlineInputBorder(),
+                SectionCard(
+                  child: Column(
+                    children: [
+                      TextFormField(
+                        controller: _emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        autocorrect: false,
+                        style: AppTypography.body
+                            .copyWith(color: context.textPrimary),
+                        decoration: _fieldDecoration(context, label: 'Email'),
+                        onChanged: (_) => setState(() {}),
+                        validator: (value) {
+                          if (value == null || !value.contains('@')) {
+                            return 'Enter a valid email';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      TextFormField(
+                        controller: _passwordController,
+                        obscureText: _obscurePassword,
+                        style: AppTypography.body
+                            .copyWith(color: context.textPrimary),
+                        decoration: _fieldDecoration(
+                          context,
+                          label: 'Password',
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscurePassword
+                                  ? Icons.visibility_outlined
+                                  : Icons.visibility_off_outlined,
+                              color: context.textSecondary,
+                            ),
+                            onPressed: () => setState(
+                                () => _obscurePassword = !_obscurePassword),
+                          ),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.length < 6) {
+                            return 'Password must be at least 6 characters';
+                          }
+                          return null;
+                        },
+                      ),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: _emailController.text.trim().isEmpty
+                              ? null
+                              : _forgotPassword,
+                          child: Text(
+                            'Forgot password?',
+                            style: AppTypography.bodySecondary
+                                .copyWith(color: context.accent),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      _LegalCheckRow(
+                        value: _acceptedTos,
+                        onChanged: (v) =>
+                            setState(() => _acceptedTos = v ?? false),
+                        prefixText: 'I accept the ',
+                        linkText: 'Terms of Service',
+                        url: 'https://vagabundo.app/terms-of-service-tos/',
+                      ),
+                      _LegalCheckRow(
+                        value: _acceptedPrivacy,
+                        onChanged: (v) =>
+                            setState(() => _acceptedPrivacy = v ?? false),
+                        prefixText: 'I accept the ',
+                        linkText: 'Privacy Policy',
+                        url: 'https://vagabundo.app/privacy-policy/',
+                      ),
+                      if (!canSubmit) ...[
+                        const SizedBox(height: AppSpacing.xs),
+                        Text(
+                          'You must accept the Terms of Service and Privacy Policy to continue.',
+                          style: AppTypography.bodySecondary
+                              .copyWith(color: Colors.red),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ],
                   ),
-                  onChanged: (_) => setState(() {}),
-                  validator: (value) {
-                    if (value == null || !value.contains('@')) {
-                      return 'Enter a valid email';
-                    }
-                    return null;
-                  },
                 ),
-                const SizedBox(height: AppSpacing.md),
-                TextFormField(
-                  controller: _passwordController,
-                  obscureText: _obscurePassword,
-                  decoration: InputDecoration(
-                    labelText: 'Password',
-                    border: const OutlineInputBorder(),
-                    suffixIcon: IconButton(
-                      icon: Icon(_obscurePassword
-                          ? Icons.visibility_outlined
-                          : Icons.visibility_off_outlined),
-                      onPressed: () =>
-                          setState(() => _obscurePassword = !_obscurePassword),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.length < 6) {
-                      return 'Password must be at least 6 characters';
-                    }
-                    return null;
-                  },
-                ),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed:
-                        _emailController.text.trim().isEmpty ? null : _forgotPassword,
-                    child: const Text('Forgot password?'),
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                _LegalCheckRow(
-                  value: _acceptedTos,
-                  onChanged: (v) => setState(() => _acceptedTos = v ?? false),
-                  prefixText: 'I accept the ',
-                  linkText: 'Terms of Service',
-                  url: 'https://vagabundo.app/terms-of-service-tos/',
-                ),
-                _LegalCheckRow(
-                  value: _acceptedPrivacy,
-                  onChanged: (v) => setState(() => _acceptedPrivacy = v ?? false),
-                  prefixText: 'I accept the ',
-                  linkText: 'Privacy Policy',
-                  url: 'https://vagabundo.app/privacy-policy/',
-                ),
-                if (!canSubmit) ...[
-                  const SizedBox(height: AppSpacing.xs),
-                  Text(
-                    'You must accept the Terms of Service and Privacy Policy to continue.',
-                    style: AppTypography.bodySecondary.copyWith(color: Colors.red),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
                 if (_errorMessage != null && _errorMessage!.isNotEmpty) ...[
-                  const SizedBox(height: AppSpacing.sm),
+                  const SizedBox(height: AppSpacing.md),
                   Text(
                     _errorMessage!,
                     style: AppTypography.body.copyWith(color: Colors.red),
@@ -238,12 +292,18 @@ class _SignInSignUpScreenState extends ConsumerState<SignInSignUpScreen> {
                   onPressed: canSubmit ? _submit : null,
                 ),
                 const SizedBox(height: AppSpacing.md),
-                TextButton(
-                  onPressed: () => setState(() => _isSignUp = !_isSignUp),
-                  child: Text(
-                    _isSignUp
-                        ? 'Already have an account? Sign in'
-                        : "Don't have an account? Sign up",
+                Center(
+                  child: TextButton(
+                    onPressed: () => setState(() => _isSignUp = !_isSignUp),
+                    child: Text(
+                      _isSignUp
+                          ? 'Already have an account? Sign in'
+                          : "Don't have an account? Sign up",
+                      style: AppTypography.body.copyWith(
+                        color: context.accent,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(height: AppSpacing.md),
@@ -251,26 +311,22 @@ class _SignInSignUpScreenState extends ConsumerState<SignInSignUpScreen> {
                   children: [
                     Expanded(child: Divider(color: context.cardStroke)),
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
                       child: Text(
                         'or',
-                        style: AppTypography.bodySecondary.copyWith(color: context.textSecondary),
+                        style: AppTypography.bodySecondary
+                            .copyWith(color: context.textSecondary),
                       ),
                     ),
                     Expanded(child: Divider(color: context.cardStroke)),
                   ],
                 ),
                 const SizedBox(height: AppSpacing.md),
-                OutlinedButton.icon(
-                  icon: _isGoogleLoading
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.g_mobiledata),
-                  label: const Text('Continue with Google'),
-                  onPressed: canSubmit && !_isGoogleLoading ? _continueWithGoogle : null,
+                _GoogleButton(
+                  isLoading: _isGoogleLoading,
+                  enabled: canSubmit && !_isGoogleLoading,
+                  onPressed: _continueWithGoogle,
                 ),
               ],
             ),
@@ -302,13 +358,19 @@ class _LegalCheckRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Checkbox(value: value, onChanged: onChanged),
+        Checkbox(
+          value: value,
+          onChanged: onChanged,
+          activeColor: context.accent,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+        ),
         Expanded(
           child: GestureDetector(
             onTap: () => launchUrl(Uri.parse(url)),
             child: Text.rich(
               TextSpan(
-                style: AppTypography.bodySecondary.copyWith(color: context.textPrimary),
+                style: AppTypography.bodySecondary
+                    .copyWith(color: context.textPrimary),
                 children: [
                   TextSpan(text: prefixText),
                   TextSpan(
@@ -316,6 +378,7 @@ class _LegalCheckRow extends StatelessWidget {
                     style: TextStyle(
                       color: context.accent,
                       decoration: TextDecoration.underline,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],
@@ -324,6 +387,58 @@ class _LegalCheckRow extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// "Continue with Google" dugme — pill oblik, isti radius kao PrimaryButton,
+/// umjesto default OutlinedButton uglova.
+class _GoogleButton extends StatelessWidget {
+  const _GoogleButton({
+    required this.isLoading,
+    required this.enabled,
+    required this.onPressed,
+  });
+
+  final bool isLoading;
+  final bool enabled;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 52,
+      child: OutlinedButton(
+        onPressed: enabled ? onPressed : null,
+        style: OutlinedButton.styleFrom(
+          backgroundColor: context.cardBackground,
+          side: BorderSide(color: context.cardStroke),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppSpacing.pillRadius),
+          ),
+        ),
+        child: isLoading
+            ? SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                    strokeWidth: 2, color: context.accent),
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.g_mobiledata, color: context.textPrimary),
+                  const SizedBox(width: AppSpacing.xs),
+                  Text(
+                    'Continue with Google',
+                    style: AppTypography.body.copyWith(
+                      color: context.textPrimary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+      ),
     );
   }
 }
