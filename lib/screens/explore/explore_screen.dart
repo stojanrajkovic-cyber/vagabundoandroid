@@ -126,12 +126,12 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
 
       case ExploreLoaded(:final pois):
         return SafeArea(
-          child: SingleChildScrollView(
+          child: Padding(
             padding: const EdgeInsets.fromLTRB(
               AppSpacing.md,
               AppSpacing.lg,
               AppSpacing.md,
-              AppSpacing.xxl,
+              AppSpacing.md,
             ),
             child: ExploreResultsScreen(pois: pois),
           ),
@@ -196,7 +196,8 @@ class _CenteredMessage extends StatelessWidget {
                 Text(
                   subtitle!,
                   textAlign: TextAlign.center,
-                  style: AppTypography.bodySecondary.copyWith(color: context.textSecondary),
+                  style: AppTypography.bodySecondary
+                      .copyWith(color: context.textSecondary),
                 ),
               ],
               if (actionLabel != null) ...[
@@ -227,7 +228,8 @@ class _OfflineOverlay extends StatelessWidget {
   Widget build(BuildContext context) {
     return Positioned.fill(
       child: ColoredBox(
-        color: Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.96),
+        color:
+            Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.96),
         child: SafeArea(
           child: Center(
             child: Padding(
@@ -235,17 +237,20 @@ class _OfflineOverlay extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.cloud_off_outlined, size: 48, color: context.textSecondary),
+                  Icon(Icons.cloud_off_outlined,
+                      size: 48, color: context.textSecondary),
                   const SizedBox(height: AppSpacing.md),
                   Text(
                     'You are offline',
-                    style: AppTypography.body.copyWith(color: context.textPrimary),
+                    style:
+                        AppTypography.body.copyWith(color: context.textPrimary),
                   ),
                   const SizedBox(height: AppSpacing.xs),
                   Text(
                     'Explore needs an internet connection to find nearby places.',
                     textAlign: TextAlign.center,
-                    style: AppTypography.bodySecondary.copyWith(color: context.textSecondary),
+                    style: AppTypography.bodySecondary
+                        .copyWith(color: context.textSecondary),
                   ),
                 ],
               ),

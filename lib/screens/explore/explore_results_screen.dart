@@ -14,13 +14,22 @@ import '../../widgets/primary_button.dart';
 
 /// Port ExploreResultsView.swift — segmented list/map toggle + "Explore
 /// again" dugme na dnu koje restartuje cijeli flow preko controller.start().
+///
+/// NAPOMENA (fix): raniji layout je ugrađivao mapu FIKSNE visine (420px)
+/// unutar scrollable roditelja (SingleChildScrollView u explore_screen.dart)
+/// — mapa nije mogla zauzeti preostali prostor ekrana, a dugme je ostajalo
+/// odmah ispod nje umjesto na dnu ekrana. Sad ovaj widget SAM upravlja
+/// svojim prostorom preko Expanded (parent MORA dati bounded height, vidi
+/// izmjenu u explore_screen.dart — SingleChildScrollView je uklonjen za
+/// ExploreLoaded case).
 class ExploreResultsScreen extends ConsumerStatefulWidget {
   const ExploreResultsScreen({super.key, required this.pois});
 
   final List<NearbyPOI> pois;
 
   @override
-  ConsumerState<ExploreResultsScreen> createState() => _ExploreResultsScreenState();
+  ConsumerState<ExploreResultsScreen> createState() =>
+      _ExploreResultsScreenState();
 }
 
 class _ExploreResultsScreenState extends ConsumerState<ExploreResultsScreen> {
@@ -39,21 +48,26 @@ class _ExploreResultsScreenState extends ConsumerState<ExploreResultsScreen> {
           },
         ),
         const SizedBox(height: AppSpacing.md),
-        if (_mode == ExploreDisplayMode.list)
-          Column(
-            children: [
-              for (final poi in widget.pois) ...[
-                PoiRow(poi: poi, onTap: () => showPoiDetailSheet(context, poi)),
-                const SizedBox(height: AppSpacing.sm),
-              ],
-            ],
-          )
-        else
-          SizedBox(
-            height: 420,
-            child: ExploreMapView(pois: widget.pois),
-          ),
-        const SizedBox(height: AppSpacing.lg),
+        Expanded(
+          child: _mode == ExploreDisplayMode.list
+              ? ListView.builder(
+                  itemCount: widget.pois.length,
+                  itemBuilder: (context, index) {
+                    final poi = widget.pois[index];
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                      child: PoiRow(
+                          poi: poi,
+                          onTap: () => showPoiDetailSheet(context, poi)),
+                    );
+                  },
+                )
+              : ClipRRect(
+                  borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+                  child: ExploreMapView(pois: widget.pois),
+                ),
+        ),
+        const SizedBox(height: AppSpacing.md),
         PrimaryButton(
           label: 'Explore again',
           onPressed: () {
@@ -98,7 +112,8 @@ class _SegmentedToggle extends StatelessWidget {
 }
 
 class _SegmentButton extends StatelessWidget {
-  const _SegmentButton({required this.label, required this.isSelected, required this.onTap});
+  const _SegmentButton(
+      {required this.label, required this.isSelected, required this.onTap});
 
   final String label;
   final bool isSelected;
@@ -112,7 +127,9 @@ class _SegmentButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
         decoration: BoxDecoration(
-          color: isSelected ? context.accent.withValues(alpha: 0.10) : Colors.transparent,
+          color: isSelected
+              ? context.accent.withValues(alpha: 0.10)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(AppSpacing.pillRadius),
         ),
         child: Text(

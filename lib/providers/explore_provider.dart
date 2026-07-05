@@ -72,7 +72,8 @@ class ExploreController extends StateNotifier<ExploreState> {
     state = ExploreReady(coord);
   }
 
-  Future<void> explore({required int radiusMeters, required Set<String> categoryKeys}) async {
+  Future<void> explore(
+      {required int radiusMeters, required Set<String> categoryKeys}) async {
     if (!ref.read(isAuthenticatedProvider)) return;
     final current = state;
     if (current is! ExploreReady) return;
@@ -91,11 +92,17 @@ class ExploreController extends StateNotifier<ExploreState> {
         includedTypes: googleTypes,
       );
       state = pois.isEmpty ? ExploreEmpty() : ExploreLoaded(pois);
-    } catch (_) {
+      // } catch (_) {
+      //   state = ExploreError('Failed to load nearby places. Please try again.');
+      // }
+    } catch (e) {
+      // ignore: avoid_print
+      print('🔎 nearbyPlaces failed: $e');
       state = ExploreError('Failed to load nearby places. Please try again.');
     }
   }
 }
 
 final exploreControllerProvider =
-    StateNotifierProvider<ExploreController, ExploreState>((ref) => ExploreController(ref));
+    StateNotifierProvider<ExploreController, ExploreState>(
+        (ref) => ExploreController(ref));

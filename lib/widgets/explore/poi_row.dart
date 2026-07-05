@@ -38,7 +38,8 @@ class PoiRow extends StatelessWidget {
                   color: context.accent.withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(AppSpacing.sm),
                 ),
-                child: Icon(PoiCategoryIcons.iconFor(poi.category), color: context.accent),
+                child: Icon(PoiCategoryIcons.iconFor(poi.category),
+                    color: context.accent),
               ),
               const SizedBox(width: AppSpacing.md),
               Expanded(
@@ -47,14 +48,16 @@ class PoiRow extends StatelessWidget {
                   children: [
                     Text(
                       poi.name,
-                      style: AppTypography.cardTitle.copyWith(color: context.textPrimary),
+                      style: AppTypography.cardTitle
+                          .copyWith(color: context.textPrimary),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 2),
                     Text(
                       '${poi.category} · ${DistanceFormatter.formatDistance(poi.distanceMeters, kDefaultDistanceUnit)}',
-                      style: AppTypography.bodySecondary.copyWith(color: context.textSecondary),
+                      style: AppTypography.bodySecondary
+                          .copyWith(color: context.textSecondary),
                     ),
                   ],
                 ),
@@ -80,14 +83,16 @@ class _OpenBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = isOpen ? Colors.green : Colors.red;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 4),
+      padding:
+          const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(AppSpacing.pillRadius),
       ),
       child: Text(
         isOpen ? 'Open' : 'Closed',
-        style: AppTypography.fieldLabel.copyWith(color: color, fontWeight: FontWeight.w600),
+        style: AppTypography.fieldLabel
+            .copyWith(color: color, fontWeight: FontWeight.w600),
       ),
     );
   }
