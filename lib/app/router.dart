@@ -9,6 +9,7 @@ import '../screens/result/result_screen.dart';
 import '../screens/saved/saved_plans_screen.dart';
 import '../screens/profile/profile_screen.dart';
 import '../screens/settings/settings_screen.dart';
+import '../screens/info/info_hub_screen.dart';
 import '../screens/auth/sign_in_sign_up_screen.dart';
 import '../widgets/app_tab_shell.dart';
 
@@ -48,6 +49,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/settings',
         builder: (context, state) => const SettingsScreen(),
+      ),
+      GoRoute(
+        path: '/about',
+        builder: (context, state) => const InfoHubScreen(),
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {

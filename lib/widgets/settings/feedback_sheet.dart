@@ -10,24 +10,32 @@ import '../../utils/haptics.dart';
 import '../primary_button.dart';
 
 /// Ekvivalent FeedbackSheet.swift — bug/idea toggle + poruka → Firestore.
-Future<void> showFeedbackSheet(BuildContext context) {
+///
+/// [initialType] otvara sheet sa tim tipom već selektovanim u toggle-u
+/// (koristi FeedbackCTASection za "Report a Bug"/"Suggest a Feature" prečice).
+Future<void> showFeedbackSheet(
+  BuildContext context, {
+  FeedbackType initialType = FeedbackType.bug,
+}) {
   return showModalBottomSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    builder: (context) => const _FeedbackSheet(),
+    builder: (context) => _FeedbackSheet(initialType: initialType),
   );
 }
 
 class _FeedbackSheet extends ConsumerStatefulWidget {
-  const _FeedbackSheet();
+  const _FeedbackSheet({required this.initialType});
+
+  final FeedbackType initialType;
 
   @override
   ConsumerState<_FeedbackSheet> createState() => _FeedbackSheetState();
 }
 
 class _FeedbackSheetState extends ConsumerState<_FeedbackSheet> {
-  FeedbackType _type = FeedbackType.bug;
+  late FeedbackType _type = widget.initialType;
   final _controller = TextEditingController();
   bool _isSending = false;
   bool _didSucceed = false;

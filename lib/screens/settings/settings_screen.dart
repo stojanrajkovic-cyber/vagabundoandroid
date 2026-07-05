@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/theme/app_theme.dart';
+import '../../app/theme/colors.dart';
 import '../../app/theme/spacing.dart';
 import '../../app/theme/typography.dart';
 import '../../providers/auth_provider.dart';
@@ -10,9 +11,12 @@ import '../../services/auth/google_link_service.dart';
 import '../../services/settings/app_settings_store.dart';
 import '../../widgets/settings/feedback_sheet.dart';
 
-/// Ekvivalent Settings.swift (port sa dogovorenim promjenama obima —
-/// vidi zadatak). Linked accounts (Google-only), haptic/sound feedback,
-/// appearance, feedback sheet i sign out.
+/// Ekvivalent Settings.swift (port sa dogovorenim promjenama obima).
+///
+/// REDIZAJN: svaka sekcija je sad kartica (context.cardBackground +
+/// AppSpacing.cardRadius + border + sjena) — isti vizuelni jezik kao
+/// TripSummaryCard/PlanOptionsView na Main/Result ekranima, umjesto
+/// plosnate ListView/Divider strukture od ranije.
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
@@ -70,97 +74,165 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
       body: ListView(
-        padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.lg,
+          AppSpacing.md,
+          AppSpacing.lg,
+          AppSpacing.xxl,
+        ),
         children: [
           if (isAuthenticated) ...[
             const _SectionHeader(title: 'Linked accounts'),
-            ListTile(
-              leading: CircleAvatar(
-                backgroundColor: context.cardBackground,
-                child: Text(
-                  'G',
-                  style: AppTypography.cardTitle.copyWith(color: context.textPrimary),
-                ),
-              ),
-              title: Text('Google', style: AppTypography.body.copyWith(color: context.textPrimary)),
-              trailing: _isGoogleBusy
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : TextButton(
-                      onPressed: _toggleGoogleLink,
-                      child: Text(_isGoogleLinked ? 'Unlink' : 'Link'),
-                    ),
-            ),
-            const Divider(height: AppSpacing.xl),
-          ],
-          const _SectionHeader(title: 'Feedback & feel'),
-          SwitchListTile(
-            title: Text('Haptics', style: AppTypography.body.copyWith(color: context.textPrimary)),
-            value: settings.hapticsEnabled,
-            onChanged: settingsController.setHapticsEnabled,
-          ),
-          SwitchListTile(
-            title: Text('Sound', style: AppTypography.body.copyWith(color: context.textPrimary)),
-            value: settings.soundEnabled,
-            onChanged: settingsController.setSoundEnabled,
-          ),
-          if (settings.soundEnabled)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+            _SettingsCard(
               child: Row(
                 children: [
-                  Icon(Icons.volume_down, color: context.textSecondary),
-                  Expanded(
-                    child: Slider(
-                      value: settings.soundVolume,
-                      onChanged: settingsController.setSoundVolume,
+                  CircleAvatar(
+                    backgroundColor: context.accent.withValues(alpha: 0.10),
+                    child: Text(
+                      'G',
+                      style: AppTypography.cardTitle
+                          .copyWith(color: context.accent),
                     ),
                   ),
-                  Icon(Icons.volume_up, color: context.textSecondary),
-                ],
-              ),
-            ),
-          const Divider(height: AppSpacing.xl),
-          const _SectionHeader(title: 'Appearance'),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-            child: Container(
-              padding: const EdgeInsets.all(AppSpacing.xs),
-              decoration: BoxDecoration(
-                color: context.cardBackground,
-                borderRadius: BorderRadius.circular(AppSpacing.pillRadius),
-                border: Border.all(color: context.cardStroke),
-              ),
-              child: Row(
-                children: [
-                  for (final mode in AppThemeMode.values)
-                    Expanded(
-                      child: _ThemeModeButton(
-                        mode: mode,
-                        isSelected: mode == settings.themeMode,
-                        onTap: () => settingsController.setThemeMode(mode),
-                      ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Text(
+                      'Google',
+                      style: AppTypography.body
+                          .copyWith(color: context.textPrimary),
                     ),
+                  ),
+                  _isGoogleBusy
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : TextButton(
+                          onPressed: _toggleGoogleLink,
+                          child: Text(
+                            _isGoogleLinked ? 'Unlink' : 'Link',
+                            style: AppTypography.body.copyWith(
+                              color: context.accent,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
                 ],
               ),
             ),
+            const SizedBox(height: AppSpacing.lg),
+          ],
+          const _SectionHeader(title: 'Feedback & feel'),
+          _SettingsCard(
+            child: Column(
+              children: [
+                _SettingsSwitchRow(
+                  label: 'Haptics',
+                  value: settings.hapticsEnabled,
+                  onChanged: settingsController.setHapticsEnabled,
+                ),
+                const _CardDivider(),
+                _SettingsSwitchRow(
+                  label: 'Sound',
+                  value: settings.soundEnabled,
+                  onChanged: settingsController.setSoundEnabled,
+                ),
+                if (settings.soundEnabled) ...[
+                  const SizedBox(height: AppSpacing.xs),
+                  Row(
+                    children: [
+                      Icon(Icons.volume_down,
+                          size: 18, color: context.textSecondary),
+                      Expanded(
+                        child: Slider(
+                          value: settings.soundVolume,
+                          activeColor: context.accent,
+                          onChanged: settingsController.setSoundVolume,
+                        ),
+                      ),
+                      Icon(Icons.volume_up,
+                          size: 18, color: context.textSecondary),
+                    ],
+                  ),
+                ],
+              ],
+            ),
           ),
-          const Divider(height: AppSpacing.xl),
-          ListTile(
-            leading: const Icon(Icons.feedback_outlined),
-            title: Text('Send feedback', style: AppTypography.body.copyWith(color: context.textPrimary)),
-            onTap: () => showFeedbackSheet(context),
+          const SizedBox(height: AppSpacing.lg),
+          const _SectionHeader(title: 'Appearance'),
+          _SettingsCard(
+            padding: const EdgeInsets.all(AppSpacing.xs),
+            child: Row(
+              children: [
+                for (final mode in AppThemeMode.values)
+                  Expanded(
+                    child: _ThemeModeButton(
+                      mode: mode,
+                      isSelected: mode == settings.themeMode,
+                      onTap: () => settingsController.setThemeMode(mode),
+                    ),
+                  ),
+              ],
+            ),
           ),
-          ListTile(
-            leading: const Icon(Icons.logout, color: Colors.red),
-            title: const Text('Sign out', style: TextStyle(color: Colors.red)),
-            onTap: _signOut,
+          const SizedBox(height: AppSpacing.lg),
+          _SettingsCard(
+            padding: EdgeInsets.zero,
+            child: Column(
+              children: [
+                _SettingsActionRow(
+                  icon: Icons.info_outline,
+                  label: 'About & transparency',
+                  onTap: () => context.push('/about'),
+                ),
+                const _CardDivider(indent: true),
+                _SettingsActionRow(
+                  icon: Icons.feedback_outlined,
+                  label: 'Send feedback',
+                  onTap: () => showFeedbackSheet(context),
+                ),
+                const _CardDivider(indent: true),
+                _SettingsActionRow(
+                  icon: Icons.logout,
+                  label: 'Sign out',
+                  isDestructive: true,
+                  onTap: _signOut,
+                ),
+              ],
+            ),
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Zajednički card container — isti stil kao TripSummaryCard/PlanOptionsView.
+class _SettingsCard extends StatelessWidget {
+  const _SettingsCard({required this.child, this.padding});
+
+  final Widget child;
+  final EdgeInsetsGeometry? padding;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: padding ?? const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        color: context.cardBackground,
+        borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+        border: Border.all(color: context.cardStroke),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.cerulean.withValues(alpha: 0.07),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: child,
     );
   }
 }
@@ -174,11 +246,86 @@ class _SectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-        AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, AppSpacing.sm,
-      ),
+          AppSpacing.xs, 0, AppSpacing.xs, AppSpacing.sm),
       child: Text(
         title,
         style: AppTypography.fieldLabel.copyWith(color: context.textSecondary),
+      ),
+    );
+  }
+}
+
+class _CardDivider extends StatelessWidget {
+  const _CardDivider({this.indent = false});
+
+  final bool indent;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        left: indent ? AppSpacing.lg : 0,
+        right: indent ? AppSpacing.lg : 0,
+      ),
+      child: Divider(height: AppSpacing.md, color: context.cardStroke),
+    );
+  }
+}
+
+class _SettingsSwitchRow extends StatelessWidget {
+  const _SettingsSwitchRow(
+      {required this.label, required this.value, required this.onChanged});
+
+  final String label;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(label,
+              style: AppTypography.body.copyWith(color: context.textPrimary)),
+        ),
+        Switch(value: value, activeThumbColor: context.accent, onChanged: onChanged),
+      ],
+    );
+  }
+}
+
+class _SettingsActionRow extends StatelessWidget {
+  const _SettingsActionRow({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.isDestructive = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final bool isDestructive;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = isDestructive ? Colors.red : context.textPrimary;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+          child: Row(
+            children: [
+              Icon(icon, size: 20, color: color),
+              const SizedBox(width: AppSpacing.md),
+              Text(label, style: AppTypography.body.copyWith(color: color)),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -218,7 +365,9 @@ class _ThemeModeButton extends StatelessWidget {
         curve: Curves.easeOut,
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
         decoration: BoxDecoration(
-          color: isSelected ? context.accent.withValues(alpha: 0.10) : Colors.transparent,
+          color: isSelected
+              ? context.accent.withValues(alpha: 0.10)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(AppSpacing.pillRadius),
         ),
         child: Text(

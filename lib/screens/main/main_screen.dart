@@ -18,6 +18,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/location_provider.dart';
 import '../../providers/location_selection_provider.dart';
 import '../../providers/plan_config_provider.dart';
+import '../../services/settings/sound_service.dart';
 import '../../widgets/plan/app_hero_section.dart';
 import '../../widgets/plan/country_city_picker.dart';
 import '../../widgets/plan/interest_chips_grid.dart';
@@ -66,7 +67,9 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   void _loadInitialData() {
     ref.read(locationSelectionProvider.notifier).loadCountriesIfNeeded();
     // kAppLanguageCode, NE device locale — vidi lib/app/language.dart.
-    ref.read(planConfigProvider.notifier).loadInterestsIfNeeded(lang: kAppLanguageCode);
+    ref
+        .read(planConfigProvider.notifier)
+        .loadInterestsIfNeeded(lang: kAppLanguageCode);
   }
 
   void _onScroll() {
@@ -205,8 +208,9 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       tripPace: config.tripPace,
       // kAppLanguageCode, NE `languageCode` (device locale) — interesi se
       // MORAJU snimiti na engleskom, vidi lib/app/language.dart.
-      interests:
-          ref.read(planConfigProvider.notifier).selectedLabels(kAppLanguageCode),
+      interests: ref
+          .read(planConfigProvider.notifier)
+          .selectedLabels(kAppLanguageCode),
       byCar: config.byCar,
       originName: originName,
       originLat: originLat,
@@ -225,6 +229,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       final result = await generator.generate(request);
       if (!mounted) return;
       setState(() => _isGenerating = false);
+      ref.read(soundServiceProvider).playSuccess();
       context.push('/result', extra: result);
     } catch (e) {
       if (!mounted) return;
