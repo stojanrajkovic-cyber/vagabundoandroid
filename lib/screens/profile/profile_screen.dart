@@ -37,6 +37,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   File? _avatarFile;
   bool _isRefreshing = false;
   bool _isCheckingVerification = false;
+  bool? _isEmailVerifiedOverride;
 
   @override
   void initState() {
@@ -65,10 +66,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Future<void> _pickAvatar() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
-    final picked =
-        await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 85);
+    final picked = await ImagePicker()
+        .pickImage(source: ImageSource.gallery, imageQuality: 85);
     if (picked == null) return;
-    final saved = await ref.read(profileAvatarServiceProvider).save(uid, File(picked.path));
+    final saved = await ref
+        .read(profileAvatarServiceProvider)
+        .save(uid, File(picked.path));
     if (mounted) setState(() => _avatarFile = saved);
   }
 
@@ -114,8 +117,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Future<void> _checkVerified() async {
     setState(() => _isCheckingVerification = true);
     await FirebaseAuth.instance.currentUser?.reload();
+    // authStateChanges() (koji authStateProvider koristi) NE emituje novi event
+    // na reload() — samo userChanges() stream to radi. Bez ovog lokalnog
+    // override-a, `user.emailVerified` bi ostao zaglavljen na starom snapshot-u
+    // zauvijek, bez obzira što je verifikacija stvarno uspjela.
+    final refreshed = FirebaseAuth.instance.currentUser;
     if (!mounted) return;
-    setState(() => _isCheckingVerification = false);
+    setState(() {
+      _isCheckingVerification = false;
+      _isEmailVerifiedOverride = refreshed?.emailVerified;
+    });
   }
 
   Future<void> _signOut() async {
@@ -144,13 +155,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
     if (confirmed != true) return;
     if (!mounted) return;
-    final success = await ref.read(deleteAccountServiceProvider).deleteAccount(context);
+    final success =
+        await ref.read(deleteAccountServiceProvider).deleteAccount(context);
     if (!mounted) return;
     if (success) {
       context.go('/plan');
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not delete account. Please try again.')),
+        const SnackBar(
+            content: Text('Could not delete account. Please try again.')),
       );
     }
   }
@@ -166,7 +179,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final isOffline = ref.watch(isOfflineProvider);
     final user = ref.watch(authStateProvider).asData?.value;
     final profile = ref.watch(userProfileProvider).asData?.value;
-    final visits = ref.watch(userVisitsProvider).asData?.value ?? const <VisitedCity>[];
+    final visits =
+        ref.watch(userVisitsProvider).asData?.value ?? const <VisitedCity>[];
     final monetizationAsync = ref.watch(userMonetizationProvider);
     final achievements = profile?.achievements ?? const <String>[];
 
@@ -191,7 +205,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               const _OfflineBadge(),
               const SizedBox(height: AppSpacing.lg),
             ],
-            Text('Profile', style: AppTypography.heroTitle.copyWith(color: context.textPrimary)),
+            Text('Profile',
+                style: AppTypography.heroTitle
+                    .copyWith(color: context.textPrimary)),
             const SizedBox(height: AppSpacing.lg),
             SectionCard(
               child: Row(
@@ -204,7 +220,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       backgroundColor: context.accent.withValues(alpha: 0.12),
                       backgroundImage: _avatarImage(user),
                       child: _avatarImage(user) == null
-                          ? Icon(Icons.account_circle, size: 40, color: context.accent)
+                          ? Icon(Icons.account_circle,
+                              size: 40, color: context.accent)
                           : null,
                     ),
                   ),
@@ -220,8 +237,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                 (profile?.displayName?.isNotEmpty ?? false)
                                     ? profile!.displayName!
                                     : (user?.displayName ?? 'Traveler'),
-                                style:
-                                    AppTypography.cardTitle.copyWith(color: context.textPrimary),
+                                style: AppTypography.cardTitle
+                                    .copyWith(color: context.textPrimary),
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
@@ -229,14 +246,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               icon: Icon(Icons.edit_outlined,
                                   size: 18, color: context.textSecondary),
                               visualDensity: VisualDensity.compact,
-                              onPressed: () =>
-                                  _editDisplayName(profile?.displayName ?? user?.displayName),
+                              onPressed: () => _editDisplayName(
+                                  profile?.displayName ?? user?.displayName),
                             ),
                           ],
                         ),
                         Text(
                           user?.email ?? '',
-                          style: AppTypography.bodySecondary.copyWith(color: context.textSecondary),
+                          style: AppTypography.bodySecondary
+                              .copyWith(color: context.textSecondary),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ],
@@ -254,7 +272,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ],
               ),
             ),
-            if (user != null && !user.emailVerified) ...[
+            if (user != null &&
+                !(_isEmailVerifiedOverride ?? user.emailVerified)) ...[
               const SizedBox(height: AppSpacing.lg),
               _EmailVerificationBanner(
                 email: user.email ?? '',
@@ -271,18 +290,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text('Achievements',
-                      style: AppTypography.cardTitle.copyWith(color: context.textPrimary)),
+                      style: AppTypography.cardTitle
+                          .copyWith(color: context.textPrimary)),
                   const SizedBox(height: AppSpacing.md),
                   if (achievements.isEmpty)
                     Text('No achievements yet',
-                        style:
-                            AppTypography.bodySecondary.copyWith(color: context.textSecondary))
+                        style: AppTypography.bodySecondary
+                            .copyWith(color: context.textSecondary))
                   else
                     Wrap(
                       spacing: AppSpacing.sm,
                       runSpacing: AppSpacing.sm,
                       children: [
-                        for (final key in achievements) _AchievementChip(achievementKey: key),
+                        for (final key in achievements)
+                          _AchievementChip(achievementKey: key),
                       ],
                     ),
                 ],
@@ -301,10 +322,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                        AppSpacing.md, AppSpacing.sm, AppSpacing.md, AppSpacing.sm),
+                    padding: const EdgeInsets.fromLTRB(AppSpacing.md,
+                        AppSpacing.sm, AppSpacing.md, AppSpacing.sm),
                     child: Text('Journey Map',
-                        style: AppTypography.cardTitle.copyWith(color: context.textPrimary)),
+                        style: AppTypography.cardTitle
+                            .copyWith(color: context.textPrimary)),
                   ),
                   SizedBox(
                     height: 220,
@@ -317,7 +339,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   ),
                   if (visits.isNotEmpty) ...[
                     const SizedBox(height: AppSpacing.sm),
-                    for (final visit in visits.take(15)) _VisitedCityRow(visit: visit),
+                    for (final visit in visits.take(15))
+                      _VisitedCityRow(visit: visit),
                   ],
                 ],
               ),
@@ -362,7 +385,8 @@ class _OfflineBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md, vertical: AppSpacing.sm),
       decoration: BoxDecoration(
         color: context.cardBackground,
         borderRadius: BorderRadius.circular(AppSpacing.md),
@@ -370,10 +394,12 @@ class _OfflineBadge extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(Icons.cloud_off_outlined, size: 16, color: context.textSecondary),
+          Icon(Icons.cloud_off_outlined,
+              size: 16, color: context.textSecondary),
           const SizedBox(width: AppSpacing.sm),
           Text('You are offline',
-              style: AppTypography.bodySecondary.copyWith(color: context.textSecondary)),
+              style: AppTypography.bodySecondary
+                  .copyWith(color: context.textSecondary)),
         ],
       ),
     );
@@ -400,11 +426,13 @@ class _EmailVerificationBanner extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('Verify your email',
-              style: AppTypography.cardTitle.copyWith(color: context.textPrimary)),
+              style:
+                  AppTypography.cardTitle.copyWith(color: context.textPrimary)),
           const SizedBox(height: AppSpacing.xs),
           Text(
             'We sent a verification link to $email. Verify your email to unlock the verified email achievement.',
-            style: AppTypography.bodySecondary.copyWith(color: context.textSecondary),
+            style: AppTypography.bodySecondary
+                .copyWith(color: context.textSecondary),
           ),
           const SizedBox(height: AppSpacing.md),
           Row(
@@ -413,8 +441,12 @@ class _EmailVerificationBanner extends StatelessWidget {
               const SizedBox(width: AppSpacing.sm),
               isChecking
                   ? const SizedBox(
-                      width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                  : TextButton(onPressed: onCheckVerified, child: const Text("I've verified")),
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2))
+                  : TextButton(
+                      onPressed: onCheckVerified,
+                      child: const Text("I've verified")),
             ],
           ),
         ],
@@ -439,15 +471,19 @@ class _TravelStatsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final percent = stats.usesEarthScale ? stats.earthPercent : stats.moonPercent;
-    final levelLabel = _levelLabels[stats.travelerLevelKey] ?? stats.travelerLevelKey;
+    final percent =
+        stats.usesEarthScale ? stats.earthPercent : stats.moonPercent;
+    final levelLabel =
+        _levelLabels[stats.travelerLevelKey] ?? stats.travelerLevelKey;
     final remaining = stats.nextLevelRemaining;
 
     return SectionCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Travel Stats', style: AppTypography.cardTitle.copyWith(color: context.textPrimary)),
+          Text('Travel Stats',
+              style:
+                  AppTypography.cardTitle.copyWith(color: context.textPrimary)),
           const SizedBox(height: AppSpacing.lg),
           Center(
             child: SizedBox(
@@ -479,14 +515,17 @@ class _TravelStatsCard extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        stats.usesEarthScale ? Icons.public : Icons.nightlight_round,
+                        stats.usesEarthScale
+                            ? Icons.public
+                            : Icons.nightlight_round,
                         color: context.accent,
                         size: 28,
                       ),
                       const SizedBox(height: AppSpacing.xs),
                       Text(
                         '${stats.totalKm.toStringAsFixed(0)} km',
-                        style: AppTypography.body.copyWith(color: context.textPrimary),
+                        style: AppTypography.body
+                            .copyWith(color: context.textPrimary),
                       ),
                     ],
                   ),
@@ -500,11 +539,13 @@ class _TravelStatsCard extends StatelessWidget {
               stats.usesEarthScale
                   ? '${stats.earthPercent.toStringAsFixed(1)}% around the Earth'
                   : '${stats.moonPercent.toStringAsFixed(2)}% of the way to the Moon',
-              style: AppTypography.bodySecondary.copyWith(color: context.textSecondary),
+              style: AppTypography.bodySecondary
+                  .copyWith(color: context.textSecondary),
             ),
           ),
           const SizedBox(height: AppSpacing.lg),
-          Text(levelLabel, style: AppTypography.body.copyWith(color: context.textPrimary)),
+          Text(levelLabel,
+              style: AppTypography.body.copyWith(color: context.textPrimary)),
           const SizedBox(height: AppSpacing.xs),
           ClipRRect(
             borderRadius: BorderRadius.circular(AppSpacing.xs),
@@ -520,7 +561,8 @@ class _TravelStatsCard extends StatelessWidget {
             remaining != null
                 ? '$remaining completed ${remaining == 1 ? 'trip' : 'trips'} until next level'
                 : 'Maximum level reached',
-            style: AppTypography.bodySecondary.copyWith(color: context.textSecondary),
+            style: AppTypography.bodySecondary
+                .copyWith(color: context.textSecondary),
           ),
         ],
       ),
@@ -537,7 +579,8 @@ class _AchievementChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final definition = achievementDefinitionFor(achievementKey);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md, vertical: AppSpacing.sm),
       decoration: BoxDecoration(
         color: context.accent.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(AppSpacing.pillRadius),
@@ -548,7 +591,8 @@ class _AchievementChip extends StatelessWidget {
         children: [
           Icon(definition.icon, size: 16, color: context.accent),
           const SizedBox(width: AppSpacing.xs),
-          Text(definition.title, style: AppTypography.chip.copyWith(color: context.accent)),
+          Text(definition.title,
+              style: AppTypography.chip.copyWith(color: context.accent)),
         ],
       ),
     );
@@ -571,7 +615,8 @@ class _FreePlanProgressCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('Free Plan Progress',
-              style: AppTypography.cardTitle.copyWith(color: context.textPrimary)),
+              style:
+                  AppTypography.cardTitle.copyWith(color: context.textPrimary)),
           const SizedBox(height: AppSpacing.md),
           ClipRRect(
             borderRadius: BorderRadius.circular(AppSpacing.xs),
@@ -584,10 +629,12 @@ class _FreePlanProgressCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.xs),
           Text('$remaining plans until next free',
-              style: AppTypography.bodySecondary.copyWith(color: context.textSecondary)),
+              style: AppTypography.bodySecondary
+                  .copyWith(color: context.textSecondary)),
           const SizedBox(height: AppSpacing.xs),
           Text('Free plans remaining: ${monetization.freePlansRemaining}',
-              style: AppTypography.bodySecondary.copyWith(color: context.textSecondary)),
+              style: AppTypography.bodySecondary
+                  .copyWith(color: context.textSecondary)),
         ],
       ),
     );
@@ -602,7 +649,8 @@ class _VisitedCityRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.xs),
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md, vertical: AppSpacing.xs),
       child: Row(
         children: [
           Icon(Icons.place_outlined, size: 16, color: context.textSecondary),
@@ -616,7 +664,8 @@ class _VisitedCityRow extends StatelessWidget {
           ),
           Text(
             DateFormat.yMMMd().format(visit.visitedAt),
-            style: AppTypography.bodySecondary.copyWith(color: context.textSecondary),
+            style: AppTypography.bodySecondary
+                .copyWith(color: context.textSecondary),
           ),
         ],
       ),
@@ -646,8 +695,8 @@ class _ProfileActionRow extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Padding(
-          padding:
-              const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+          padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.lg, vertical: AppSpacing.md),
           child: Row(
             children: [
               Icon(icon, size: 20, color: color),
