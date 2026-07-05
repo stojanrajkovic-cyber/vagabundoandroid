@@ -64,4 +64,12 @@ class LocalPlanMirror {
     final source = await file.readAsString();
     return ItineraryResponse.fromJsonString(source);
   }
+
+  /// Briše sve lokalne planove — koristi se pri brisanju naloga.
+  static Future<void> deleteAll() async {
+    final dir = await _plansDir();
+    if (await dir.exists()) {
+      await dir.delete(recursive: true);
+    }
+  }
 }

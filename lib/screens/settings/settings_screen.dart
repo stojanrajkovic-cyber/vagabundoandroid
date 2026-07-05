@@ -59,12 +59,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }
   }
 
-  Future<void> _signOut() async {
-    await ref.read(authServiceProvider).signOut();
-    if (!mounted) return;
-    context.go('/plan');
-  }
-
   @override
   Widget build(BuildContext context) {
     final isAuthenticated = ref.watch(isAuthenticatedProvider);
@@ -192,13 +186,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   label: 'Send feedback',
                   onTap: () => showFeedbackSheet(context),
                 ),
-                const _CardDivider(indent: true),
-                _SettingsActionRow(
-                  icon: Icons.logout,
-                  label: 'Sign out',
-                  isDestructive: true,
-                  onTap: _signOut,
-                ),
               ],
             ),
           ),
@@ -299,17 +286,15 @@ class _SettingsActionRow extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.onTap,
-    this.isDestructive = false,
   });
 
   final IconData icon;
   final String label;
   final VoidCallback onTap;
-  final bool isDestructive;
 
   @override
   Widget build(BuildContext context) {
-    final color = isDestructive ? Colors.red : context.textPrimary;
+    final color = context.textPrimary;
 
     return Material(
       color: Colors.transparent,
