@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../services/settings/app_settings_store.dart';
 import 'router.dart';
 import 'theme/app_theme.dart';
 
@@ -11,13 +12,18 @@ class VagabundoApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
+    final appThemeMode = ref.watch(appSettingsProvider).themeMode;
 
     return MaterialApp.router(
       title: 'Vagabundo',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
-      themeMode: ThemeMode.system,
+      themeMode: switch (appThemeMode) {
+        AppThemeMode.system => ThemeMode.system,
+        AppThemeMode.light => ThemeMode.light,
+        AppThemeMode.dark => ThemeMode.dark,
+      },
       routerConfig: router,
     );
   }

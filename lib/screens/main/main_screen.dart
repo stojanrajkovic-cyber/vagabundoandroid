@@ -156,10 +156,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                   const SnackBar(content: Text('Coming soon')),
                 );
               },
-              onSettingsTap: () {
-                // TODO: pravi Settings ekran — za sada vodi na Account tab
-                context.go('/profile');
-              },
+              onSettingsTap: () => context.push('/settings'),
             ),
           ),
         ],

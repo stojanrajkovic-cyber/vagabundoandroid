@@ -8,6 +8,7 @@ import '../screens/explore/explore_screen.dart';
 import '../screens/result/result_screen.dart';
 import '../screens/saved/saved_plans_screen.dart';
 import '../screens/profile/profile_screen.dart';
+import '../screens/settings/settings_screen.dart';
 import '../screens/auth/sign_in_sign_up_screen.dart';
 import '../widgets/app_tab_shell.dart';
 
@@ -43,6 +44,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           // prosljeđuje samo ItineraryResponse kroz `extra`.
           return ResultScreen(itinerary: extra as ItineraryResponse, planId: null);
         },
+      ),
+      GoRoute(
+        path: '/settings',
+        builder: (context, state) => const SettingsScreen(),
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {

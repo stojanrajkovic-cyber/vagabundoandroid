@@ -50,6 +50,16 @@ dependencies:
   # (Share.share/Printing.sharePdf) je identičan u obje verzije.
   share_plus: ^10.0.0            # native OS share sheet (link/tekst/fajlovi)
 
+  # Faza 6.5 — Settings port
+  google_sign_in: ^6.2.2        # Google account linking
+  audioplayers: ^6.1.0           # UI zvučni efekti (SoundManager port)
+  package_info_plus: ^8.1.2     # appVersion/buildNumber za feedback
+  # device_info_plus zatražen kao ^11.2.0 — spušten na ^10.1.2, isti obrazac
+  # kao share_plus/printing ranije (device_info_plus 11.x traži `web: ^1.0.0`,
+  # nekompatibilno sa firebase_auth ^4.17.4 → firebase_core ^2.27.0). API
+  # korišten ovdje (DeviceInfoPlugin().androidInfo) identičan u obje verzije.
+  device_info_plus: ^10.1.2     # deviceModel/systemVersion za feedback
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -60,3 +70,4 @@ flutter:
   assets:
     - assets/data/
     - assets/images/
+    - assets/sounds/
