@@ -86,7 +86,9 @@ class _SavedPlansScreenState extends ConsumerState<SavedPlansScreen> {
     final itinerary = ItineraryResponse.fromJsonString(plan.itineraryJSON);
     if (itinerary == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not open this plan — the saved data looks corrupted.')),
+        const SnackBar(
+            content: Text(
+                'Could not open this plan — the saved data looks corrupted.')),
       );
       return;
     }
@@ -103,11 +105,31 @@ class _SavedPlansScreenState extends ConsumerState<SavedPlansScreen> {
         showsCloseButton: false,
         onMarkCompleted: (isCompleted || uid == null)
             ? null
-            : () => FirestoreService.instance.updatePlanStatus(
+            : () async {
+                await FirestoreService.instance.updatePlanStatus(
                   uid: uid,
                   planId: plan.id,
                   status: PlanStatus.completed,
-                ),
+                );
+                // FIX: addVisit() je bio definisan ali NIKAD pozivan nigdje
+                // (ostao TODO od Faze 5) — zato Journey Map nikad nije imao
+                // podatke. Bez cityLat/cityLon ne pravimo visit (nema
+                // koordinata za pin na mapi).
+                if (plan.cityLat != null && plan.cityLon != null) {
+                  await FirestoreService.instance.addVisit(
+                    uid: uid,
+                    city: VisitedCity(
+                      id: plan.id,
+                      name: plan.city,
+                      country: itinerary.country,
+                      lat: plan.cityLat!,
+                      lon: plan.cityLon!,
+                      visitedAt: DateTime.now(),
+                      tripDistanceKm: itinerary.roadTrip?.totalDistanceKm,
+                    ),
+                  );
+                }
+              },
       ),
     );
   }
@@ -126,7 +148,9 @@ class _SavedPlansScreenState extends ConsumerState<SavedPlansScreen> {
   }
 
   double? _roadTripDistanceKm(PlanDocument plan) {
-    return ItineraryResponse.fromJsonString(plan.itineraryJSON)?.roadTrip?.totalDistanceKm;
+    return ItineraryResponse.fromJsonString(plan.itineraryJSON)
+        ?.roadTrip
+        ?.totalDistanceKm;
   }
 
   String _formatDate(DateTime date) => DateFormat.yMMMd().format(date);
@@ -138,7 +162,8 @@ class _SavedPlansScreenState extends ConsumerState<SavedPlansScreen> {
     final savedPlansState = ref.watch(savedPlansProvider);
 
     ref.listen<SavedPlansState>(savedPlansProvider, (previous, next) {
-      if (next.showSyncPrompt && (previous == null || !previous.showSyncPrompt)) {
+      if (next.showSyncPrompt &&
+          (previous == null || !previous.showSyncPrompt)) {
         _showSyncPromptDialog(next.missingOfflineIds.length);
       }
       // Osvježi offline listu kad sync završi, da nova lokalna kopija
@@ -178,13 +203,16 @@ class _SavedPlansScreenState extends ConsumerState<SavedPlansScreen> {
         if (plans.isEmpty) return _buildEmptyState(context);
 
         final uid = ref.read(authStateProvider).asData?.value?.uid;
-        final planned = plans.where((p) => p.status == PlanStatus.planned).toList();
-        final completed = plans.where((p) => p.status == PlanStatus.completed).toList();
+        final planned =
+            plans.where((p) => p.status == PlanStatus.planned).toList();
+        final completed =
+            plans.where((p) => p.status == PlanStatus.completed).toList();
 
         return RefreshIndicator(
           onRefresh: () async => ref.invalidate(userPlansProvider),
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.md, AppSpacing.md, AppSpacing.xxl),
+            padding: const EdgeInsets.fromLTRB(
+                AppSpacing.md, AppSpacing.md, AppSpacing.md, AppSpacing.xxl),
             children: [
               if (savedPlansState.missingOfflineIds.isNotEmpty)
                 Padding(
@@ -192,7 +220,9 @@ class _SavedPlansScreenState extends ConsumerState<SavedPlansScreen> {
                   child: OfflineSyncBanner(
                     count: savedPlansState.missingOfflineIds.length,
                     isSyncing: savedPlansState.isSyncing,
-                    onSyncTap: () => ref.read(savedPlansProvider.notifier).syncMissingOfflinePlans(),
+                    onSyncTap: () => ref
+                        .read(savedPlansProvider.notifier)
+                        .syncMissingOfflinePlans(),
                   ),
                 ),
               if (planned.isNotEmpty) ...[
@@ -218,7 +248,8 @@ class _SavedPlansScreenState extends ConsumerState<SavedPlansScreen> {
                               ),
                       onDelete: uid == null
                           ? null
-                          : () => FirestoreService.instance.deletePlan(uid: uid, planId: plan.id),
+                          : () => FirestoreService.instance
+                              .deletePlan(uid: uid, planId: plan.id),
                     ),
                   ),
                 const SizedBox(height: AppSpacing.lg),
@@ -239,7 +270,8 @@ class _SavedPlansScreenState extends ConsumerState<SavedPlansScreen> {
                       onTap: () => _openPlan(plan, isCompleted: true),
                       onDelete: uid == null
                           ? null
-                          : () => FirestoreService.instance.deletePlan(uid: uid, planId: plan.id),
+                          : () => FirestoreService.instance
+                              .deletePlan(uid: uid, planId: plan.id),
                     ),
                   ),
               ],
@@ -251,7 +283,8 @@ class _SavedPlansScreenState extends ConsumerState<SavedPlansScreen> {
       error: (e, _) => Center(
         child: Text(
           'Failed to load plans: $e',
-          style: AppTypography.bodySecondary.copyWith(color: context.textSecondary),
+          style: AppTypography.bodySecondary
+              .copyWith(color: context.textSecondary),
         ),
       ),
     );
@@ -266,7 +299,8 @@ class _SavedPlansScreenState extends ConsumerState<SavedPlansScreen> {
     }
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.md, AppSpacing.md, AppSpacing.xxl),
+      padding: const EdgeInsets.fromLTRB(
+          AppSpacing.md, AppSpacing.md, AppSpacing.md, AppSpacing.xxl),
       children: [
         _sectionHeader(context, 'Planned journeys'),
         const SizedBox(height: AppSpacing.sm),
@@ -298,13 +332,15 @@ class _SavedPlansScreenState extends ConsumerState<SavedPlansScreen> {
             const SizedBox(height: AppSpacing.md),
             Text(
               'No saved plans yet',
-              style: AppTypography.sectionTitle.copyWith(color: context.textPrimary),
+              style: AppTypography.sectionTitle
+                  .copyWith(color: context.textPrimary),
             ),
             const SizedBox(height: AppSpacing.xs),
             Text(
               'Plans you generate will show up here so you can revisit them anytime.',
               textAlign: TextAlign.center,
-              style: AppTypography.bodySecondary.copyWith(color: context.textSecondary),
+              style: AppTypography.bodySecondary
+                  .copyWith(color: context.textSecondary),
             ),
           ],
         ),
@@ -313,6 +349,7 @@ class _SavedPlansScreenState extends ConsumerState<SavedPlansScreen> {
   }
 
   Widget _sectionHeader(BuildContext context, String title) {
-    return Text(title, style: AppTypography.sectionTitle.copyWith(color: context.textPrimary));
+    return Text(title,
+        style: AppTypography.sectionTitle.copyWith(color: context.textPrimary));
   }
 }

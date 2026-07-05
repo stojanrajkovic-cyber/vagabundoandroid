@@ -133,6 +133,10 @@ class FirestoreService {
           'freePlansRemaining': 0,
           'stats': {'plansCount': 0, 'citiesCount': 0, 'totalKm': 0.0},
           'achievements': <String>[],
+          'planCredits': <String, int>{}, // isto ponašanje kao iOS — vidi
+          // fix objašnjenje za rules "Null value error" na potpuno odsutnom
+          // planCredits polju.
+          'paidPlansCount': 0,
         }, SetOptions(merge: true));
       }
     } catch (e) {
