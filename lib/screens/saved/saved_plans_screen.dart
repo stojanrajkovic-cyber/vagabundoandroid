@@ -14,6 +14,8 @@ import '../../providers/firestore_provider.dart';
 import '../../providers/saved_plans_provider.dart';
 import '../../services/connectivity/connectivity_service.dart';
 import '../../services/firestore/firestore_service.dart';
+import '../../services/review/review_manager.dart';
+import '../../widgets/review/rate_app_dialog.dart';
 import '../../widgets/saved/offline_sync_banner.dart';
 import '../../widgets/saved/saved_plan_row.dart';
 import '../result/result_screen.dart';
@@ -128,6 +130,12 @@ class _SavedPlansScreenState extends ConsumerState<SavedPlansScreen> {
                       tripDistanceKm: itinerary.roadTrip?.totalDistanceKm,
                     ),
                   );
+                }
+
+                final shouldPrompt =
+                    await ReviewManager.instance.registerCompletedTrip();
+                if (shouldPrompt && context.mounted) {
+                  await showRateAppDialog(context);
                 }
               },
       ),
