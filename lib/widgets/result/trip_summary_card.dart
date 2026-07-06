@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 
+import '../../app/language.dart';
 import '../../app/theme/app_theme.dart';
 import '../../app/theme/colors.dart';
 import '../../app/theme/spacing.dart';
 import '../../app/theme/typography.dart';
 import '../../models/itinerary.dart';
+import '../../services/affiliate/bike_rental_helper.dart';
+import '../../services/affiliate/discover_cars_service.dart';
+import '../../services/affiliate/stay22_service.dart';
+import '../webview/in_app_webview_screen.dart';
 
 /// Ekvivalent tripSummaryCard iz ResultView.swift.
 ///
@@ -155,22 +160,23 @@ class _TripSummaryCardState extends State<TripSummaryCard> {
     }
   }
 
-  /// TODO: prava Plan Tools funkcionalnost (Stay22 smještaj, rent-a-car,
-  /// rent-a-bike integracije) — van obima za sada, ovo je samo UI
-  /// acknowledgment da dugme "radi" umjesto da izgleda mrtvo/pokvareno.
+  /// TODO: rent-a-car i rent-a-bike integracije — van obima za sada, ostaju
+  /// disabled dok ne stignu odgovarajući affiliate fajlovi.
   void _showPlanToolsSheet(BuildContext context) {
     showModalBottomSheet<void>(
       context: context,
       useRootNavigator: true,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => const _PlanToolsSheet(),
+      builder: (_) => _PlanToolsSheet(itinerary: widget.itinerary),
     );
   }
 }
 
 class _PlanToolsSheet extends StatelessWidget {
-  const _PlanToolsSheet();
+  const _PlanToolsSheet({required this.itinerary});
+
+  final ItineraryResponse itinerary;
 
   @override
   Widget build(BuildContext context) {
@@ -212,23 +218,51 @@ class _PlanToolsSheet extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: AppSpacing.xs),
-              const ListTile(
-                leading: Icon(Icons.bed_outlined),
-                title: Text('Find accommodation'),
-                trailing: Text('Coming soon', style: TextStyle(fontSize: 11)),
-                enabled: false,
+              ListTile(
+                leading: const Icon(Icons.bed_outlined),
+                title: const Text('Find accommodation'),
+                onTap: itinerary.cityLat == null || itinerary.cityLon == null
+                    ? null
+                    : () {
+                        Navigator.pop(context);
+                        final url = Stay22Service.buildUrl(
+                          lat: itinerary.cityLat!,
+                          lon: itinerary.cityLon!,
+                          languageCode: kAppLanguageCode,
+                        );
+                        Navigator.of(context, rootNavigator: true).push(
+                          MaterialPageRoute(
+                            builder: (_) => InAppWebViewScreen(
+                              url: url,
+                              title: 'Accommodation in ${itinerary.city}',
+                            ),
+                          ),
+                        );
+                      },
               ),
-              const ListTile(
-                leading: Icon(Icons.directions_car_outlined),
-                title: Text('Rent a car'),
-                trailing: Text('Coming soon', style: TextStyle(fontSize: 11)),
-                enabled: false,
+              ListTile(
+                leading: const Icon(Icons.directions_car_outlined),
+                title: const Text('Rent a car'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.of(context, rootNavigator: true).push(
+                    MaterialPageRoute(
+                      builder: (_) => InAppWebViewScreen.html(
+                        html: DiscoverCarsService.buildHtml(),
+                        title: 'Rent a car',
+                        baseUrl: 'https://www.discovercars.com',
+                      ),
+                    ),
+                  );
+                },
               ),
-              const ListTile(
-                leading: Icon(Icons.pedal_bike_outlined),
-                title: Text('Rent a bike'),
-                trailing: Text('Coming soon', style: TextStyle(fontSize: 11)),
-                enabled: false,
+              ListTile(
+                leading: const Icon(Icons.pedal_bike_outlined),
+                title: const Text('Rent a bike'),
+                onTap: () {
+                  Navigator.pop(context);
+                  BikeRentalHelper.openGoogleMapsSearch(itinerary.city);
+                },
               ),
             ],
           ),

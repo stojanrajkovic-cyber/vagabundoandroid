@@ -4,7 +4,7 @@
     {
       "name": "flutter-android",
       "runtimeExecutable": "flutter",
-      "runtimeArgs": ["run", "-d", "android"],
+      "runtimeArgs": ["run", "-d", "emulator-5554"],
       "port": 0
     }
   ]
