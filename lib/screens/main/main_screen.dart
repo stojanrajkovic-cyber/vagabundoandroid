@@ -18,6 +18,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/location_provider.dart';
 import '../../providers/location_selection_provider.dart';
 import '../../providers/plan_config_provider.dart';
+import '../../services/review/review_manager.dart';
 import '../../services/settings/sound_service.dart';
 import '../../widgets/plan/app_hero_section.dart';
 import '../../widgets/plan/country_city_picker.dart';
@@ -153,12 +154,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
             right: 0,
             child: FloatingTopBar(
               scrollOffset: _scrollOffset,
-              onReviewTap: () {
-                // TODO: in_app_review integracija (App Store/Play Store rating prompt)
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Coming soon')),
-                );
-              },
+              onReviewTap: () => ReviewManager.instance.openPlayStorePage(),
               onSettingsTap: () => context.push('/settings'),
             ),
           ),

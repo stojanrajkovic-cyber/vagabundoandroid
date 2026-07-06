@@ -134,7 +134,7 @@ class _SavedPlansScreenState extends ConsumerState<SavedPlansScreen> {
 
                 final shouldPrompt =
                     await ReviewManager.instance.registerCompletedTrip();
-                if (shouldPrompt && context.mounted) {
+                if (shouldPrompt && mounted) {
                   await showRateAppDialog(context);
                 }
               },
