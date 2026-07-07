@@ -11,6 +11,7 @@ import '../screens/profile/profile_screen.dart';
 import '../screens/settings/settings_screen.dart';
 import '../screens/info/info_hub_screen.dart';
 import '../screens/auth/sign_in_sign_up_screen.dart';
+import '../screens/splash/splash_screen.dart';
 import '../widgets/app_tab_shell.dart';
 
 /// Ekvivalent NavigationStack + TabView switch iz AppTabShell.swift.
@@ -23,8 +24,12 @@ final routerProvider = Provider<GoRouter>((ref) {
   ref.watch(authStateProvider);
 
   return GoRouter(
-    initialLocation: '/plan',
+    initialLocation: '/splash',
     routes: [
+      GoRoute(
+        path: '/splash',
+        builder: (context, state) => const SplashScreen(),
+      ),
       // Van StatefulShellRoute tab strukture (isto kao Swift `.sheet`/full-screen
       // push za ResultView — ne treba svoj tab, samo se push-uje preko postojećih).
       GoRoute(

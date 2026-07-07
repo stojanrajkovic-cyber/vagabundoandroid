@@ -104,12 +104,18 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                 imageAssetPath: _heroImageAssetPath,
               ),
             ),
-            const SliverPadding(
+            SliverPadding(
+              // Isti fix kao main_screen.dart — AppTabShell renderuje floating
+              // tab bar preko Scaffold(extendBody: true), sadržaj mora imati
+              // dovoljno donjeg razmaka da zadnja stavka (Explore nearby
+              // dugme) može potpuno da se skroluje iznad njega. Bez ovoga,
+              // scroll extent je skoro nula (sadržaj skoro stane u ekran) pa
+              // scroll djeluje "zaglavljeno", a dugme ostaje zaklonjeno.
               padding: EdgeInsets.fromLTRB(
                 AppSpacing.md,
                 AppSpacing.lg,
                 AppSpacing.md,
-                AppSpacing.xxl,
+                MediaQuery.of(context).padding.bottom + 96,
               ),
               sliver: SliverToBoxAdapter(child: ExploreControls()),
             ),
