@@ -1,0 +1,8 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "com.stojanrajkovic.vagabundo",
+    "sha256_cert_fingerprints": ["3C:9F:82:59:E5:F7:9B:B8:0C:F8:EE:1B:52:9A:68:4A:D0:77:5D:80:6C:57:CA:75:13:39:FF:85:E2:26:40:C9"]
+  }
+}]

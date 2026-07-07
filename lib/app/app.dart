@@ -4,15 +4,41 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
 import '../services/firestore/firestore_service.dart';
 import '../services/settings/app_settings_store.dart';
+import '../services/share/incoming_link_service.dart';
 import 'router.dart';
 import 'theme/app_theme.dart';
 
 /// Root widget — ekvivalent VagabundoApp.swift (App protocol + WindowGroup).
-class VagabundoApp extends ConsumerWidget {
+class VagabundoApp extends ConsumerStatefulWidget {
   const VagabundoApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<VagabundoApp> createState() => _VagabundoAppState();
+}
+
+class _VagabundoAppState extends ConsumerState<VagabundoApp> {
+  late final IncomingLinkService _incomingLinkService;
+
+  @override
+  void initState() {
+    super.initState();
+    // Privremeno za Fazu A test — Faza B će ovo zamijeniti stvarnim
+    // resolving-om (prikaz sadržaja na osnovu tokena).
+    _incomingLinkService = IncomingLinkService((token) {
+      // ignore: avoid_print
+      print('✅ Faza A: token stigao do app-a: $token');
+    });
+    _incomingLinkService.start();
+  }
+
+  @override
+  void dispose() {
+    _incomingLinkService.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final router = ref.watch(routerProvider);
     final appThemeMode = ref.watch(appSettingsProvider).themeMode;
 

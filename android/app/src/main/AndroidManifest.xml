@@ -26,6 +26,19 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+            <!-- Android ekvivalent iOS Universal Links — Faza A "cijev" za
+                 https://vagabundo.app/p/{token} share linkove. autoVerify
+                 zahtijeva assetlinks.json hostovan na toj domeni (vidi
+                 napomenu korisniku), inače link otvara browser umjesto app-a. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="https"
+                    android:host="vagabundo.app"
+                    android:pathPrefix="/p" />
+            </intent-filter>
         </activity>
         <!-- TODO: zamijeni sa stvarnim Google Maps API ključem (Google Cloud
              Console → Maps SDK for Android). Bez validnog ključa GoogleMap
