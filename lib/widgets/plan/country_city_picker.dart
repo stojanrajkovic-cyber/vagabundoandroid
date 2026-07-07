@@ -49,7 +49,8 @@ class CountryCityPicker extends ConsumerWidget {
           const SizedBox(height: AppSpacing.xs),
           Text(
             state.citiesLoadError!,
-            style: AppTypography.bodySecondary.copyWith(color: Colors.red.shade400),
+            style: AppTypography.bodySecondary
+                .copyWith(color: Colors.red.shade400),
           ),
         ],
         if (notifier.selectedCountryMetadata() != null) ...[
@@ -145,9 +146,22 @@ class _CountryMetadataLine extends StatelessWidget {
       if (entry.population != null) 'Population: ${entry.population}',
     ];
     if (parts.isEmpty) return const SizedBox.shrink();
-    return Text(
-      parts.join(' · '),
-      style: AppTypography.bodySecondary.copyWith(color: context.textSecondary),
+
+    final color = context.textSecondary;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md, vertical: AppSpacing.xs),
+      decoration: BoxDecoration(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(AppSpacing.pillRadius),
+        border: Border.all(color: color),
+      ),
+      child: Text(
+        parts.join(' · '),
+        style: AppTypography.bodySecondary.copyWith(color: color),
+      ),
     );
   }
 }
@@ -200,7 +214,8 @@ class _PickerButton extends StatelessWidget {
                     children: [
                       Text(
                         label,
-                        style: AppTypography.fieldLabel.copyWith(color: context.textSecondary),
+                        style: AppTypography.fieldLabel
+                            .copyWith(color: context.textSecondary),
                       ),
                       const SizedBox(height: 2),
                       Text(
@@ -298,7 +313,8 @@ class _SearchableListSheetState<T> extends State<_SearchableListSheet<T>> {
                 ),
                 child: Text(
                   widget.title,
-                  style: AppTypography.sectionTitle.copyWith(color: context.textPrimary),
+                  style: AppTypography.sectionTitle
+                      .copyWith(color: context.textPrimary),
                 ),
               ),
               Padding(
@@ -325,7 +341,8 @@ class _SearchableListSheetState<T> extends State<_SearchableListSheet<T>> {
                     ? Center(
                         child: Text(
                           'No results',
-                          style: AppTypography.bodySecondary.copyWith(color: context.textSecondary),
+                          style: AppTypography.bodySecondary
+                              .copyWith(color: context.textSecondary),
                         ),
                       )
                     : Material(
@@ -338,7 +355,8 @@ class _SearchableListSheetState<T> extends State<_SearchableListSheet<T>> {
                             return ListTile(
                               title: Text(
                                 widget.itemLabel(item),
-                                style: AppTypography.body.copyWith(color: context.textPrimary),
+                                style: AppTypography.body
+                                    .copyWith(color: context.textPrimary),
                               ),
                               onTap: () {
                                 Haptics.selection();
