@@ -39,6 +39,15 @@
                     android:host="vagabundo.app"
                     android:pathPrefix="/p" />
             </intent-filter>
+            <!-- Flutter podrazumijevano prosljeđuje Intent data URI direktno
+                 GoRouter-u kao rutu ("Flutter deep linking"), što je u
+                 sukobu sa app_links pristupom (IncomingLinkService) —
+                 GoRouter baca "no routes for location" jer /p/{token} nije
+                 GoRoute path. Isključeno: app_links i dalje prima Intent
+                 nezavisno preko svog native kanala. -->
+            <meta-data
+                android:name="flutter_deeplinking_enabled"
+                android:value="false" />
         </activity>
         <!-- TODO: zamijeni sa stvarnim Google Maps API ključem (Google Cloud
              Console → Maps SDK for Android). Bez validnog ključa GoogleMap

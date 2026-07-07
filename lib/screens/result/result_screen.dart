@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:printing/printing.dart';
 import 'package:share_plus/share_plus.dart';
@@ -41,6 +42,7 @@ class ResultScreenArgs {
     this.showMarkCompleted = false,
     this.onMarkCompleted,
     this.showsCloseButton = true,
+    this.isSharedReceived = false,
   });
 
   final ItineraryResponse itinerary;
@@ -49,6 +51,11 @@ class ResultScreenArgs {
   final bool showMarkCompleted;
   final VoidCallback? onMarkCompleted;
   final bool showsCloseButton;
+
+  /// true = otvoren preko deep link-a (Faza B share resolving), nije "moj"
+  /// plan — isključuje "Mark as completed" akciju i uključuje "Save to my
+  /// plans" umjesto nje.
+  final bool isSharedReceived;
 }
 
 /// Ekvivalent ResultView.swift (samo in-scope dijelovi za Fazu 4 — vidi
@@ -66,6 +73,7 @@ class ResultScreen extends ConsumerStatefulWidget {
     this.showMarkCompleted = false,
     this.onMarkCompleted,
     this.showsCloseButton = true,
+    this.isSharedReceived = false,
   });
 
   final ItineraryResponse itinerary;
@@ -87,6 +95,9 @@ class ResultScreen extends ConsumerStatefulWidget {
   /// gesture/dugme, ovo je samo za AppBar-ov automatski leading widget).
   final bool showsCloseButton;
 
+  /// true = otvoren preko deep link-a (Faza B) — vidi ResultScreenArgs.
+  final bool isSharedReceived;
+
   @override
   ConsumerState<ResultScreen> createState() => _ResultScreenState();
 }
@@ -100,6 +111,7 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
   bool _readyToPop = false;
   bool _isShareActionInProgress = false;
   bool _isPackingActionInProgress = false;
+  bool _isSavingSharedPlan = false;
 
   bool get _isSavedPlan => widget.planId != null;
 
@@ -141,11 +153,23 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
               tooltip: 'Share plan',
               onPressed: _isShareActionInProgress ? null : _showShareOptionsSheet,
             ),
-            if (widget.showMarkCompleted)
+            if (widget.showMarkCompleted && !widget.isSharedReceived)
               IconButton(
                 icon: const Icon(Icons.check_circle_outline),
                 tooltip: 'Mark as completed',
                 onPressed: _handleMarkCompleted,
+              ),
+            if (widget.isSharedReceived && widget.planId == null)
+              IconButton(
+                icon: _isSavingSharedPlan
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.bookmark_add_outlined),
+                tooltip: 'Save to my plans',
+                onPressed: _isSavingSharedPlan ? null : _handleSaveSharedPlan,
               ),
           ],
         ),
@@ -257,6 +281,62 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
   void _handleMarkCompleted() {
     widget.onMarkCompleted?.call();
     _popWhenReady();
+  }
+
+  /// "Save to my plans" — samo za deep-link primljene planove (Faza B).
+  /// Neulogovan korisnik ide na sign-in umjesto direktnog snimanja.
+  Future<void> _handleSaveSharedPlan() async {
+    final isAuthenticated = ref.read(isAuthenticatedProvider);
+    if (!isAuthenticated) {
+      final shouldSignIn = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Sign in to save this plan'),
+          content: const Text(
+              'Create a free account or sign in to keep this itinerary in your saved plans.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('Sign in'),
+            ),
+          ],
+        ),
+      );
+      if (shouldSignIn == true && mounted) context.push('/profile');
+      return;
+    }
+
+    final uid = ref.read(authServiceProvider).currentUser?.uid;
+    if (uid == null) return;
+
+    setState(() => _isSavingSharedPlan = true);
+    try {
+      final plan = PlanDocument.create(
+        city: _workingItinerary.city,
+        days: _workingItinerary.days.length,
+        languageCode: _workingItinerary.promptSnapshot?.languageCode ?? 'en',
+        generatorModel: _workingItinerary.generatorModel,
+        itineraryJSON: jsonEncode(_workingItinerary.toJson()),
+        cityLat: _workingItinerary.cityLat,
+        cityLon: _workingItinerary.cityLon,
+      );
+      await FirestoreService.instance.savePlan(uid: uid, plan: plan);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Saved to your plans!')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not save plan: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _isSavingSharedPlan = false);
+    }
   }
 
   /// Postavlja `_readyToPop` pa poziva `maybePop()` tek NAKON što se frame

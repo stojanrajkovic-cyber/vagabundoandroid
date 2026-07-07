@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/auth_provider.dart';
+import '../screens/result/result_screen.dart';
 import '../services/firestore/firestore_service.dart';
 import '../services/settings/app_settings_store.dart';
 import '../services/share/incoming_link_service.dart';
+import '../services/share/share_link_resolver_service.dart';
 import 'router.dart';
 import 'theme/app_theme.dart';
 
@@ -22,11 +24,49 @@ class _VagabundoAppState extends ConsumerState<VagabundoApp> {
   @override
   void initState() {
     super.initState();
-    // Privremeno za Fazu A test — Faza B će ovo zamijeniti stvarnim
-    // resolving-om (prikaz sadržaja na osnovu tokena).
-    _incomingLinkService = IncomingLinkService((token) {
-      // ignore: avoid_print
-      print('✅ Faza A: token stigao do app-a: $token');
+    // Faza B — ekvivalent AppState.resolveIncomingShareIfNeeded() iz iOS-a:
+    // token (Faza A) -> stvaran plan preko ShareLinkResolverService -> Result
+    // ekran u read-only modu.
+    _incomingLinkService = IncomingLinkService((token) async {
+      final router = ref.read(routerProvider);
+
+      final navigatorContext = router.routerDelegate.navigatorKey.currentContext;
+      if (navigatorContext == null) return;
+
+      showDialog<void>(
+        context: navigatorContext,
+        barrierDismissible: false,
+        builder: (_) => const Center(child: CircularProgressIndicator()),
+      );
+
+      final result = await ShareLinkResolverService.resolve(token);
+
+      if (navigatorContext.mounted) {
+        Navigator.of(navigatorContext, rootNavigator: true).pop();
+      }
+
+      switch (result) {
+        case ShareResolveSuccess(:final itinerary):
+          router.push(
+            '/result',
+            extra: ResultScreenArgs(
+              itinerary: itinerary,
+              planId: null,
+              isReadOnly: true,
+              showMarkCompleted: false,
+              showsCloseButton: true,
+              isSharedReceived: true,
+            ),
+          );
+        case ShareResolveNotFound():
+        case ShareResolveInvalidData():
+          if (navigatorContext.mounted) {
+            ScaffoldMessenger.of(navigatorContext).showSnackBar(
+              const SnackBar(
+                  content: Text('This shared plan is no longer available.')),
+            );
+          }
+      }
     });
     _incomingLinkService.start();
   }

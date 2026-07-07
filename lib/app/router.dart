@@ -39,6 +39,7 @@ final routerProvider = Provider<GoRouter>((ref) {
               showMarkCompleted: extra.showMarkCompleted,
               onMarkCompleted: extra.onMarkCompleted,
               showsCloseButton: extra.showsCloseButton,
+              isSharedReceived: extra.isSharedReceived,
             );
           }
           // Svježe generisan plan (Faza 3/4 flow) — main_screen.dart i dalje
