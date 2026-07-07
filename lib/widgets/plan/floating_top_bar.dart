@@ -7,9 +7,6 @@ import '../../app/theme/typography.dart';
 /// Ekvivalent TopBarView.swift (iOS) — floating traka sa logom/brendingom,
 /// review dugmetom i settings dugmetom, koja se skuplja pri scroll-u.
 /// Ista scroll-driven shrink matematika kao AppHeroSection (parallax).
-///
-/// TODO: zamijeni Icons.explore sa pravim Vagabundo logo asset-om kad stigne
-/// (assets/images/logo.png ili slično).
 class FloatingTopBar extends StatelessWidget {
   const FloatingTopBar({
     super.key,

@@ -23,8 +23,6 @@ class PackingGeneratorService {
       endDate: endDate,
     );
 
-    print(itinerary.interests);
-
     final items = PackingRecommendationEngine.generateItems(
       itinerary: itinerary,
       context: context,
@@ -33,10 +31,21 @@ class PackingGeneratorService {
       interests: itinerary.interests ?? [],
     );
 
-    // TODO: weather advice banner ako trip počinje uskoro i kiša je vjerovatna
-    // (ekvivalent WeatherAdviceGenerator.adviceIfTripSoon — izvorni kod
-    // nedostupan, preskočeno za sada).
+    // Ekvivalent WeatherAdviceGenerator.adviceIfTripSoon (izvorni Swift kod
+    // nedostupan — ovo je razumna rekonstrukcija): upozori SAMO ako putovanje
+    // počinje uskoro (unutar 3 dana od "danas" — ista Day1=danas pretpostavka
+    // kao weather widget) I kiša je vjerovatna po istom kontekstu koji je
+    // engine već izračunao.
+    final daysUntilTrip = startDate.difference(DateTime.now()).inDays;
+    final String? advice = (daysUntilTrip <= 3 && context.likelyRain)
+        ? 'Rain is likely during your trip — pack a rain jacket or umbrella.'
+        : null;
 
-    return PackingGuide(startDate: startDate, endDate: endDate, items: items);
+    return PackingGuide(
+      startDate: startDate,
+      endDate: endDate,
+      items: items,
+      notes: advice,
+    );
   }
 }

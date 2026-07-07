@@ -7,7 +7,8 @@ import '../../models/packing_guide.dart';
 
 /// Ekvivalent PackingGuideView.swift.
 class PackingGuideScreen extends StatefulWidget {
-  const PackingGuideScreen({super.key, required this.guide, required this.onUpdate});
+  const PackingGuideScreen(
+      {super.key, required this.guide, required this.onUpdate});
 
   final PackingGuide guide;
 
@@ -26,13 +27,17 @@ class _PackingGuideScreenState extends State<PackingGuideScreen> {
   Widget build(BuildContext context) {
     final grouped = <PackingCategory, List<PackingItem>>{};
     for (final category in PackingCategory.values) {
-      final itemsInCategory = _items.where((i) => i.category == category).toList()
-        ..sort((a, b) {
-          if (a.isChecked != b.isChecked) {
-            return a.isChecked ? 1 : -1;
-          }
-          return a.displayText().toLowerCase().compareTo(b.displayText().toLowerCase());
-        });
+      final itemsInCategory =
+          _items.where((i) => i.category == category).toList()
+            ..sort((a, b) {
+              if (a.isChecked != b.isChecked) {
+                return a.isChecked ? 1 : -1;
+              }
+              return a
+                  .displayText()
+                  .toLowerCase()
+                  .compareTo(b.displayText().toLowerCase());
+            });
       if (itemsInCategory.isNotEmpty) {
         grouped[category] = itemsInCategory;
       }
@@ -48,7 +53,8 @@ class _PackingGuideScreenState extends State<PackingGuideScreen> {
         appBar: AppBar(
           leading: TextButton(
             onPressed: _closeAndSave,
-            child: Text('Close', style: AppTypography.body.copyWith(color: context.accent)),
+            child: Text('Close',
+                style: AppTypography.body.copyWith(color: context.accent)),
           ),
           leadingWidth: 80,
           title: const Text('Packing guide'),
@@ -65,7 +71,8 @@ class _PackingGuideScreenState extends State<PackingGuideScreen> {
               ? Center(
                   child: Text(
                     'No items yet',
-                    style: AppTypography.body.copyWith(color: context.textSecondary),
+                    style: AppTypography.body
+                        .copyWith(color: context.textSecondary),
                   ),
                 )
               : ListView(
@@ -74,24 +81,58 @@ class _PackingGuideScreenState extends State<PackingGuideScreen> {
                     vertical: AppSpacing.md,
                   ),
                   children: [
+                    if (widget.guide.notes != null &&
+                        widget.guide.notes!.isNotEmpty) ...[
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(AppSpacing.md),
+                        margin: const EdgeInsets.only(bottom: AppSpacing.md),
+                        decoration: BoxDecoration(
+                          color: context.accent.withValues(alpha: 0.10),
+                          borderRadius:
+                              BorderRadius.circular(AppSpacing.cardRadius),
+                          border: Border.all(
+                              color: context.accent.withValues(alpha: 0.30)),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(Icons.umbrella_outlined,
+                                size: 18, color: context.accent),
+                            const SizedBox(width: AppSpacing.sm),
+                            Expanded(
+                              child: Text(
+                                widget.guide.notes!,
+                                style: AppTypography.bodySecondary
+                                    .copyWith(color: context.textPrimary),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                     for (final entry in grouped.entries) ...[
                       Padding(
-                        padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                        padding:
+                            const EdgeInsets.symmetric(vertical: AppSpacing.sm),
                         child: Text(
                           entry.key.label,
-                          style: AppTypography.sectionTitle.copyWith(color: context.textPrimary),
+                          style: AppTypography.sectionTitle
+                              .copyWith(color: context.textPrimary),
                         ),
                       ),
                       Container(
                         decoration: BoxDecoration(
                           color: context.cardBackground,
-                          borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+                          borderRadius:
+                              BorderRadius.circular(AppSpacing.cardRadius),
                           border: Border.all(color: context.cardStroke),
                         ),
                         child: Column(
                           children: [
                             for (var i = 0; i < entry.value.length; i++) ...[
-                              if (i > 0) Divider(height: 1, color: context.cardStroke),
+                              if (i > 0)
+                                Divider(height: 1, color: context.cardStroke),
                               _buildRow(entry.value[i]),
                             ],
                           ],
@@ -110,7 +151,8 @@ class _PackingGuideScreenState extends State<PackingGuideScreen> {
     final row = InkWell(
       onTap: () => _toggleChecked(item),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+        padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg, vertical: AppSpacing.md),
         child: Row(
           children: [
             Icon(
@@ -122,8 +164,11 @@ class _PackingGuideScreenState extends State<PackingGuideScreen> {
               child: Text(
                 item.displayText(),
                 style: AppTypography.body.copyWith(
-                  color: item.isChecked ? context.textSecondary : context.textPrimary,
-                  decoration: item.isChecked ? TextDecoration.lineThrough : null,
+                  color: item.isChecked
+                      ? context.textSecondary
+                      : context.textPrimary,
+                  decoration:
+                      item.isChecked ? TextDecoration.lineThrough : null,
                 ),
               ),
             ),
@@ -178,13 +223,15 @@ class _PackingGuideScreenState extends State<PackingGuideScreen> {
       backgroundColor: Colors.transparent,
       builder: (sheetContext) {
         return Padding(
-          padding: EdgeInsets.only(bottom: MediaQuery.of(sheetContext).viewInsets.bottom),
+          padding: EdgeInsets.only(
+              bottom: MediaQuery.of(sheetContext).viewInsets.bottom),
           child: SafeArea(
             child: Container(
               padding: const EdgeInsets.all(AppSpacing.lg),
               decoration: BoxDecoration(
                 color: sheetContext.cardBackground,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSpacing.cardRadius)),
+                borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(AppSpacing.cardRadius)),
                 border: Border.all(color: sheetContext.cardStroke),
               ),
               child: Column(
@@ -193,16 +240,19 @@ class _PackingGuideScreenState extends State<PackingGuideScreen> {
                 children: [
                   Text(
                     'Add item',
-                    style: AppTypography.sectionTitle.copyWith(color: sheetContext.textPrimary),
+                    style: AppTypography.sectionTitle
+                        .copyWith(color: sheetContext.textPrimary),
                   ),
                   const SizedBox(height: AppSpacing.md),
                   TextField(
                     controller: controller,
                     autofocus: true,
-                    style: AppTypography.body.copyWith(color: sheetContext.textPrimary),
+                    style: AppTypography.body
+                        .copyWith(color: sheetContext.textPrimary),
                     decoration: InputDecoration(
                       hintText: 'e.g. Travel pillow',
-                      hintStyle: AppTypography.body.copyWith(color: sheetContext.textSecondary),
+                      hintStyle: AppTypography.body
+                          .copyWith(color: sheetContext.textSecondary),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(AppSpacing.md),
                         borderSide: BorderSide(color: sheetContext.cardStroke),
@@ -212,15 +262,20 @@ class _PackingGuideScreenState extends State<PackingGuideScreen> {
                         borderSide: BorderSide(color: sheetContext.accent),
                       ),
                     ),
-                    onSubmitted: (_) => _submitAddItem(sheetContext, controller.text),
+                    onSubmitted: (_) =>
+                        _submitAddItem(sheetContext, controller.text),
                   ),
                   const SizedBox(height: AppSpacing.md),
                   SizedBox(
                     width: double.infinity,
                     child: FilledButton(
-                      style: FilledButton.styleFrom(backgroundColor: sheetContext.accent),
-                      onPressed: () => _submitAddItem(sheetContext, controller.text),
-                      child: Text('Add', style: AppTypography.button.copyWith(color: sheetContext.onAccent)),
+                      style: FilledButton.styleFrom(
+                          backgroundColor: sheetContext.accent),
+                      onPressed: () =>
+                          _submitAddItem(sheetContext, controller.text),
+                      child: Text('Add',
+                          style: AppTypography.button
+                              .copyWith(color: sheetContext.onAccent)),
                     ),
                   ),
                 ],
@@ -236,7 +291,8 @@ class _PackingGuideScreenState extends State<PackingGuideScreen> {
     final trimmed = rawText.trim();
     if (trimmed.isEmpty) return;
     setState(() {
-      _items.add(PackingItem(category: PackingCategory.reminders, title: trimmed, isCustom: true));
+      _items.add(PackingItem(
+          category: PackingCategory.reminders, title: trimmed, isCustom: true));
     });
     Navigator.of(sheetContext).pop();
   }

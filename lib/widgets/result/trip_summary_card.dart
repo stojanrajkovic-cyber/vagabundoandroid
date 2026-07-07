@@ -160,8 +160,6 @@ class _TripSummaryCardState extends State<TripSummaryCard> {
     }
   }
 
-  /// TODO: rent-a-car i rent-a-bike integracije — van obima za sada, ostaju
-  /// disabled dok ne stignu odgovarajući affiliate fajlovi.
   void _showPlanToolsSheet(BuildContext context) {
     showModalBottomSheet<void>(
       context: context,

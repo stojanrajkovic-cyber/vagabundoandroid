@@ -122,7 +122,9 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
     final baseIndex = hasRoadTrip ? 1 : 0;
     final dayIndex = _selectedPageIndex - baseIndex;
     if (dayIndex < 0 || dayIndex >= _workingItinerary.days.length) {
-      return _workingItinerary.days.isNotEmpty ? _workingItinerary.days.first.dayNumber : 1;
+      return _workingItinerary.days.isNotEmpty
+          ? _workingItinerary.days.first.dayNumber
+          : 1;
     }
     return _workingItinerary.days[dayIndex].dayNumber;
   }
@@ -140,7 +142,9 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
       child: Scaffold(
         appBar: AppBar(
           automaticallyImplyLeading: widget.showsCloseButton,
-          title: Text(_workingItinerary.city.isEmpty ? 'Itinerary' : _workingItinerary.city),
+          title: Text(_workingItinerary.city.isEmpty
+              ? 'Itinerary'
+              : _workingItinerary.city),
           actions: [
             IconButton(
               icon: _isShareActionInProgress
@@ -151,7 +155,8 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
                     )
                   : const Icon(Icons.share_outlined),
               tooltip: 'Share plan',
-              onPressed: _isShareActionInProgress ? null : _showShareOptionsSheet,
+              onPressed:
+                  _isShareActionInProgress ? null : _showShareOptionsSheet,
             ),
             if (widget.showMarkCompleted && !widget.isSharedReceived)
               IconButton(
@@ -182,17 +187,20 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
                 TripSummaryCard(itinerary: _workingItinerary),
                 const SizedBox(height: AppSpacing.lg),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                   child: _PackingGuideRow(
                     enabled: _isSavedPlan && !_isPackingActionInProgress,
                     isLoading: _isPackingActionInProgress,
                     onTap: _handleGeneratePackingGuide,
                   ),
                 ),
-                if (_workingItinerary.cityLat != null && _workingItinerary.cityLon != null) ...[
+                if (_workingItinerary.cityLat != null &&
+                    _workingItinerary.cityLon != null) ...[
                   const SizedBox(height: AppSpacing.lg),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                     child: WeatherCard(
                       lat: _workingItinerary.cityLat!,
                       lon: _workingItinerary.cityLon!,
@@ -209,7 +217,8 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
                 ),
                 const SizedBox(height: AppSpacing.md),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                   child: _buildSelectedPage(hasRoadTrip),
                 ),
                 const SizedBox(height: AppSpacing.xxl),
@@ -234,8 +243,10 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
 
     final day = _workingItinerary.days[dayIndex];
     LatLng? fallbackCenter;
-    if (_workingItinerary.cityLat != null && _workingItinerary.cityLon != null) {
-      fallbackCenter = LatLng(_workingItinerary.cityLat!, _workingItinerary.cityLon!);
+    if (_workingItinerary.cityLat != null &&
+        _workingItinerary.cityLon != null) {
+      fallbackCenter =
+          LatLng(_workingItinerary.cityLat!, _workingItinerary.cityLon!);
     }
 
     return DayCard(
@@ -262,7 +273,8 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
     });
     try {
       final generator = ref.read(itineraryGeneratorProvider);
-      return await generator.generateAlternativeVariant(plan: _workingItinerary, dayNumber: dayNumber);
+      return await generator.generateAlternativeVariant(
+          plan: _workingItinerary, dayNumber: dayNumber);
     } finally {
       if (mounted) {
         setState(() {
@@ -397,7 +409,9 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
     final uid = ref.read(authStateProvider).asData?.value?.uid;
     if (uid == null) return null;
 
-    return ref.read(shareLinkServiceProvider).createOrGetShareForPlan(uid: uid, planId: planId);
+    return ref
+        .read(shareLinkServiceProvider)
+        .createOrGetShareForPlan(uid: uid, planId: planId);
   }
 
   /// 1a — stvarno slanje public link-a preko native share sheet-a.
@@ -407,7 +421,8 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
       final info = await _ensureShareInfo();
       if (info == null) return;
       final url = 'https://vagabundo.app/p/${info.id}';
-      await Share.share(url, subject: 'Check out my trip to ${_workingItinerary.city}!');
+      await Share.share(url,
+          subject: 'Check out my trip to ${_workingItinerary.city}!');
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -451,7 +466,8 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
     setState(() => _isShareActionInProgress = true);
     try {
       final bytes = await ItineraryPdfGenerator.generate(_workingItinerary);
-      await Printing.sharePdf(bytes: bytes, filename: '${_workingItinerary.city}_itinerary.pdf');
+      await Printing.sharePdf(
+          bytes: bytes, filename: '${_workingItinerary.city}_itinerary.pdf');
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -480,10 +496,12 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
 
     setState(() => _isPackingActionInProgress = true);
     try {
-      final existing = await FirestoreService.instance.loadPackingGuide(uid: uid, planId: planId);
+      final existing = await FirestoreService.instance
+          .loadPackingGuide(uid: uid, planId: planId);
       if (!mounted) return;
       if (existing != null) {
-        await _openPackingGuideScreen(uid: uid, planId: planId, guide: existing);
+        await _openPackingGuideScreen(
+            uid: uid, planId: planId, guide: existing);
         return;
       }
 
@@ -500,13 +518,16 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
       if (cityLat == null || cityLon == null) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Missing city coordinates — cannot generate packing guide')),
+          const SnackBar(
+              content: Text(
+                  'Missing city coordinates — cannot generate packing guide')),
         );
         return;
       }
 
       final dayCount = _workingItinerary.days.length;
-      final endDate = startDate.add(Duration(days: dayCount > 0 ? dayCount - 1 : 0));
+      final endDate =
+          startDate.add(Duration(days: dayCount > 0 ? dayCount - 1 : 0));
 
       final guide = await PackingGeneratorService.generate(
         itinerary: _workingItinerary,
@@ -538,27 +559,36 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
       builder: (_) => PackingGuideScreen(
         guide: guide,
         onUpdate: (updated) {
-          FirestoreService.instance.savePackingGuide(uid: uid, planId: planId, guide: updated);
+          FirestoreService.instance
+              .savePackingGuide(uid: uid, planId: planId, guide: updated);
         },
       ),
     ));
   }
 
   Future<void> _handlePopAttempt() async {
-    await _persistOnClose();
+    final success = await _persistOnClose();
     if (!mounted) return;
-    _popWhenReady();
+    if (success) _popWhenReady();
+    // Ako snimanje ne uspije, NE zatvaramo ekran — SnackBar sa "Retry" je
+    // vidljiv i funkcionalan dok je ekran i dalje otvoren, umjesto da trepne
+    // i nestane usred zatvaranja (ili da "Retry" kasnije radi na već
+    // uništenom widget-u).
   }
 
   /// Ekvivalent saveBeforeClosing() iz ResultView.swift — samo za svježe
   /// generisane planove (planId == null) i ulogovanog korisnika. Ako je
   /// planId != null (otvoren iz Saved Plans), plan već postoji u
   /// Firestore-u pa se ovdje NIKAD ne poziva savePlan.
-  Future<void> _persistOnClose() async {
-    if (widget.planId != null) return;
+  ///
+  /// Vraća true ako je snimanje uspjelo (ili nije bilo potrebno), false ako
+  /// je pokušano i propalo — pozivalac koristi ovo da odluči da li smije
+  /// zatvoriti ekran.
+  Future<bool> _persistOnClose() async {
+    if (widget.planId != null) return true;
 
     final user = ref.read(authStateProvider).asData?.value;
-    if (user == null) return;
+    if (user == null) return true;
 
     final plan = PlanDocument.create(
       city: _workingItinerary.city,
@@ -572,10 +602,25 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
 
     try {
       await FirestoreService.instance.savePlan(uid: user.uid, plan: plan);
-      // TODO Faza 5: VisitedCity zapis (addVisit) i profileStore.refreshPlans()
-      // ekvivalent — preskočeno za sada, samo savePlan.
-    } catch (_) {
-      // TODO Faza 5: prikaži grešku korisniku / retry umjesto tihog gutanja.
+      // NAPOMENA: addVisit() se NAMJERNO ne poziva ovdje. Visits predstavljaju
+      // STVARNO posjećene gradove (VisitedCity), ne planove koje si tek
+      // sačuvao — isto ponašanje kao iOS ProfileStore.refreshPlans(), koji
+      // gradi visits SAMO iz completedPlans, ne iz svih planova. Pravo
+      // mjesto za addVisit je "Mark as completed" (već implementirano u
+      // saved_plans_screen.dart), ne ovdje pri svježem save-u.
+      return true;
+    } catch (e) {
+      if (!mounted) return false;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Could not save your plan. Please try again.'),
+          action: SnackBarAction(
+            label: 'Retry',
+            onPressed: _handlePopAttempt,
+          ),
+        ),
+      );
+      return false;
     }
   }
 }
@@ -605,7 +650,8 @@ class _ShareOptionsSheet extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
         decoration: BoxDecoration(
           color: context.cardBackground,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSpacing.cardRadius)),
+          borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(AppSpacing.cardRadius)),
           border: Border.all(color: context.cardStroke),
         ),
         // ListTile crta ink splash-eve na najbližem Material predaku — bez ovoga
@@ -613,67 +659,86 @@ class _ShareOptionsSheet extends StatelessWidget {
         child: Material(
           color: Colors.transparent,
           child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-              decoration: BoxDecoration(
-                color: context.cardStroke,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Share plan',
-                  style: AppTypography.sectionTitle.copyWith(color: context.textPrimary),
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                decoration: BoxDecoration(
+                  color: context.cardStroke,
+                  borderRadius: BorderRadius.circular(2),
                 ),
               ),
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            ListTile(
-              leading: Icon(Icons.link, color: canShareLink ? context.accent : context.textSecondary),
-              title: Text(
-                'Share link',
-                style: AppTypography.body.copyWith(
-                  color: canShareLink ? context.textPrimary : context.textSecondary,
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Share plan',
+                    style: AppTypography.sectionTitle
+                        .copyWith(color: context.textPrimary),
+                  ),
                 ),
               ),
-              trailing: canShareLink
-                  ? null
-                  : Text('Save the plan first', style: AppTypography.fieldLabel.copyWith(color: context.textSecondary)),
-              enabled: canShareLink,
-              onTap: canShareLink ? onShareLink : null,
-            ),
-            ListTile(
-              leading: Icon(Icons.tune, color: canShareLink ? context.accent : context.textSecondary),
-              title: Text(
-                'Manage link',
-                style: AppTypography.body.copyWith(
-                  color: canShareLink ? context.textPrimary : context.textSecondary,
+              const SizedBox(height: AppSpacing.xs),
+              ListTile(
+                leading: Icon(Icons.link,
+                    color:
+                        canShareLink ? context.accent : context.textSecondary),
+                title: Text(
+                  'Share link',
+                  style: AppTypography.body.copyWith(
+                    color: canShareLink
+                        ? context.textPrimary
+                        : context.textSecondary,
+                  ),
                 ),
+                trailing: canShareLink
+                    ? null
+                    : Text('Save the plan first',
+                        style: AppTypography.fieldLabel
+                            .copyWith(color: context.textSecondary)),
+                enabled: canShareLink,
+                onTap: canShareLink ? onShareLink : null,
               ),
-              trailing: canShareLink
-                  ? null
-                  : Text('Save the plan first', style: AppTypography.fieldLabel.copyWith(color: context.textSecondary)),
-              enabled: canShareLink,
-              onTap: canShareLink ? onManageLink : null,
-            ),
-            ListTile(
-              leading: Icon(Icons.text_snippet_outlined, color: context.accent),
-              title: Text('Share as text', style: AppTypography.body.copyWith(color: context.textPrimary)),
-              onTap: onShareAsText,
-            ),
-            ListTile(
-              leading: Icon(Icons.picture_as_pdf_outlined, color: context.accent),
-              title: Text('Share as PDF', style: AppTypography.body.copyWith(color: context.textPrimary)),
-              onTap: onShareAsPdf,
-            ),
-          ],
+              ListTile(
+                leading: Icon(Icons.tune,
+                    color:
+                        canShareLink ? context.accent : context.textSecondary),
+                title: Text(
+                  'Manage link',
+                  style: AppTypography.body.copyWith(
+                    color: canShareLink
+                        ? context.textPrimary
+                        : context.textSecondary,
+                  ),
+                ),
+                trailing: canShareLink
+                    ? null
+                    : Text('Save the plan first',
+                        style: AppTypography.fieldLabel
+                            .copyWith(color: context.textSecondary)),
+                enabled: canShareLink,
+                onTap: canShareLink ? onManageLink : null,
+              ),
+              ListTile(
+                leading:
+                    Icon(Icons.text_snippet_outlined, color: context.accent),
+                title: Text('Share as text',
+                    style: AppTypography.body
+                        .copyWith(color: context.textPrimary)),
+                onTap: onShareAsText,
+              ),
+              ListTile(
+                leading:
+                    Icon(Icons.picture_as_pdf_outlined, color: context.accent),
+                title: Text('Share as PDF',
+                    style: AppTypography.body
+                        .copyWith(color: context.textPrimary)),
+                onTap: onShareAsPdf,
+              ),
+            ],
           ),
         ),
       ),
@@ -685,7 +750,8 @@ class _ShareOptionsSheet extends StatelessWidget {
 /// dodatak): svjež, nesačuvan plan (planId == null) prikazuje "Save the
 /// plan first" hint umjesto dugmeta koje ne radi ništa.
 class _PackingGuideRow extends StatelessWidget {
-  const _PackingGuideRow({required this.enabled, required this.isLoading, required this.onTap});
+  const _PackingGuideRow(
+      {required this.enabled, required this.isLoading, required this.onTap});
 
   final bool enabled;
   final bool isLoading;
@@ -700,20 +766,23 @@ class _PackingGuideRow extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
         onTap: enabled ? onTap : null,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+          padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.lg, vertical: AppSpacing.md),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
             border: Border.all(color: context.cardStroke),
           ),
           child: Row(
             children: [
-              Icon(Icons.card_travel, color: enabled ? context.accent : context.textSecondary),
+              Icon(Icons.card_travel,
+                  color: enabled ? context.accent : context.textSecondary),
               const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Text(
                   'Generate packing guide',
                   style: AppTypography.body.copyWith(
-                    color: enabled ? context.textPrimary : context.textSecondary,
+                    color:
+                        enabled ? context.textPrimary : context.textSecondary,
                   ),
                 ),
               ),
@@ -724,7 +793,9 @@ class _PackingGuideRow extends StatelessWidget {
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
               else if (!enabled)
-                Text('Save the plan first', style: AppTypography.fieldLabel.copyWith(color: context.textSecondary))
+                Text('Save the plan first',
+                    style: AppTypography.fieldLabel
+                        .copyWith(color: context.textSecondary))
               else
                 Icon(Icons.chevron_right, color: context.textSecondary),
             ],

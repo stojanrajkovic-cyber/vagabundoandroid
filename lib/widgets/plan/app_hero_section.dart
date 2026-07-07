@@ -12,10 +12,6 @@ import '../../app/theme/typography.dart';
 /// [scrollOffset] računa roditelj (main_screen.dart) preko ScrollController
 /// i prosljeđuje ovdje; matematika (progress/eased/scale/blur) je 1:1
 /// prevedena sa SwiftUI-a, samo koristeći Flutter Curves umjesto .easeOut.
-///
-/// TODO: kad hero_bg_1..12 slike stignu u assets/images/, proslijedi
-/// [imageAssetPath] (npr. nasumično biraj po gradu/danu kao na iOS-u).
-/// Dok slika nema, koristi se accent gradient placeholder.
 class AppHeroSection extends StatelessWidget {
   const AppHeroSection({
     super.key,
@@ -42,7 +38,8 @@ class AppHeroSection extends StatelessWidget {
     final scale = 1.05 - (0.05 * eased);
     final blurSigma = eased * 6;
 
-    final titleOpacity = (1 - (clampedOffset / _titleFadeRange)).clamp(0.0, 1.0);
+    final titleOpacity =
+        (1 - (clampedOffset / _titleFadeRange)).clamp(0.0, 1.0);
     final titleBlur = (clampedOffset / _titleBlurRange).clamp(0.0, 6.0);
 
     return ClipRect(
@@ -54,7 +51,8 @@ class AppHeroSection extends StatelessWidget {
             Transform.scale(
               scale: scale,
               child: ImageFiltered(
-                imageFilter: ui.ImageFilter.blur(sigmaX: blurSigma, sigmaY: blurSigma),
+                imageFilter:
+                    ui.ImageFilter.blur(sigmaX: blurSigma, sigmaY: blurSigma),
                 child: imageAssetPath != null
                     ? Image.asset(imageAssetPath!, fit: BoxFit.cover)
                     : DecoratedBox(
@@ -89,10 +87,12 @@ class AppHeroSection extends StatelessWidget {
               child: Opacity(
                 opacity: titleOpacity,
                 child: ImageFiltered(
-                  imageFilter: ui.ImageFilter.blur(sigmaX: titleBlur, sigmaY: titleBlur),
+                  imageFilter:
+                      ui.ImageFilter.blur(sigmaX: titleBlur, sigmaY: titleBlur),
                   child: Text(
                     title,
-                    style: AppTypography.heroTitle.copyWith(color: Colors.white),
+                    style:
+                        AppTypography.heroTitle.copyWith(color: Colors.white),
                   ),
                 ),
               ),
