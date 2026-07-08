@@ -1,8 +1,13 @@
 flutter_native_splash:
   color: "#EBF6FF" # AppColors.alice
-  image: assets/images/logo.png
+  image: assets/images/3.0x/logo.png
   android_12:
     color: "#EBF6FF"
-    image: assets/images/logo.png
+    image: assets/images/3.0x/logo.png
+    # Android 12+ splash API prisilno stavlja ikonicu u fiksni inset okvir sa
+    # SVOJOM pozadinskom bojom — uskladi je sa 'color' iznad da nema vidljive
+    # ivice/kutije oko loga (bez ovoga, default Android boja se ne poklapa
+    # sa našom, pa se vidi "kutija" efekat).
+    icon_background_color: "#EBF6FF"
   android: true
   ios: false # iOS već ima svoj nativni splash, ne diramo ga

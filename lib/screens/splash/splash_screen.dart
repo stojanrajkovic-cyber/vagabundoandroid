@@ -9,6 +9,10 @@ import '../../app/theme/typography.dart';
 /// isti logo, isto mjesto) da tranzicija bude bešavna, pa animira: logo
 /// fade+scale in, ZATIM (sekvencijalno) "Vagabundo" tekst ispod pojavljuje
 /// slovo-po-slovo, pa navigira na pravi app.
+///
+/// Firebase je GARANTOVANO spreman prije nego se ovaj ekran uopšte prikaže
+/// (main.dart await-uje Firebase.initializeApp() prije runApp()) — ne treba
+/// mu nikakvo dodatno čekanje, samo čista animacija.
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -71,7 +75,8 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.alice, // ISTA boja kao native splash — bez treptaja
+      backgroundColor:
+          AppColors.alice, // ISTA boja kao native splash — bez treptaja
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -80,7 +85,12 @@ class _SplashScreenState extends State<SplashScreen>
               opacity: _logoOpacity,
               child: ScaleTransition(
                 scale: _logoScale,
-                child: Image.asset('assets/images/logo.png', width: 96, height: 96),
+                child: Image.asset(
+                  'assets/images/logo.png', // Flutter density-variant sistem
+                  // bira 2.0x/3.0x automatski po gustini ekrana uređaja.
+                  width: 96,
+                  height: 96,
+                ),
               ),
             ),
             const SizedBox(height: AppSpacing.lg),
