@@ -68,6 +68,7 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^3.0.0
   flutter_native_splash: ^2.4.4
+  flutter_launcher_icons: ^0.14.3
 
 flutter:
   uses-material-design: true
@@ -75,3 +76,14 @@ flutter:
     - assets/data/
     - assets/images/
     - assets/sounds/
+
+flutter_launcher_icons:
+  android: true
+  ios: false # iOS ikonica se ne dira
+  image_path: "assets/images/3.0x/logo.png"
+  min_sdk_android: 21
+  # Android 12+ "themed" adaptive icon — logo već ima svoju plavu pozadinu
+  # ugrađenu (krug/pin), pa koristimo istu sliku i za foreground, uz
+  # cerulean pozadinsku boju da se uklopi ako sistem doda svoj tint/masku.
+  adaptive_icon_background: "#0075A2" # AppColors.cerulean
+  adaptive_icon_foreground: "assets/images/3.0x/logo.png"
