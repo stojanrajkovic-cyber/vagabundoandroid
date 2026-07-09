@@ -45,3 +45,8 @@ app.*.map.json
 /android/app/release
 # Google
 android/app/google-services.json
+
+# Release signing — NIKAD u git (repo je javan)
+android/key.properties
+*.jks
+*.keystore
