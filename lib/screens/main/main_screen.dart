@@ -184,10 +184,25 @@ class _MainScreenState extends ConsumerState<MainScreen> {
     double? originLon;
     if (config.byCar) {
       if (config.useCurrentLocation) {
-        final coordinate =
-            ref.read(deviceLocationManagerProvider).currentCoordinate;
-        originLat = coordinate?.latitude;
-        originLon = coordinate?.longitude;
+        final deviceLocation = ref.read(deviceLocationManagerProvider);
+        final coordinate = deviceLocation.currentCoordinate;
+        final accuracy = deviceLocation.horizontalAccuracyMeters;
+        // Isti prag preciznosti kao iOS (acc <= 150m) — ne koristi grubu/
+        // netačnu lokaciju za road trip origin bez upozorenja.
+        if (coordinate != null &&
+            accuracy != null &&
+            accuracy > 0 &&
+            accuracy <= 150) {
+          originLat = coordinate.latitude;
+          originLon = coordinate.longitude;
+        } else if (config.originQuery.trim().isNotEmpty) {
+          // Nema dovoljno precizne lokacije — padni nazad na ručno unesen
+          // origin ako postoji.
+          originName = config.originQuery.trim();
+        }
+        // Ako nema ni precizne lokacije ni ručnog unosa, originLat/Lon/Name
+        // ostaju null — PromptBuilder.originAddon() jednostavno izostavlja
+        // ORIGIN liniju (isto ponašanje kao iOS kad oba izostanu).
       } else if (config.originQuery.trim().isNotEmpty) {
         originName = config.originQuery.trim();
       }
@@ -212,6 +227,8 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       originLat: originLat,
       originLon: originLon,
       withKids: config.withKids,
+      maxDrivingHoursPerDay: config.maxDrivingHoursPerDay,
+      breakEveryMinutes: config.breakEveryMinutes,
     );
 
     // TODO Faza 8: purchase gating (PurchaseManager.canGeneratePlan / kupovina

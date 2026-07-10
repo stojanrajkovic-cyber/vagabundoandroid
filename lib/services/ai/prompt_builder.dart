@@ -99,10 +99,14 @@ Output shape example (schema, not content):
 }
 Steps must be non-empty strings. Do not output empty steps.''';
 
-    // 🔗 Dodaj postojeće add-one da model vidi car/roadTrip zahtjeve.
+    // 🔗 Dodaj postojeće add-one da model vidi car zahtjeve. NAPOMENA: AI više
+    // NE generiše stvarnu rutu/segmente (roadTripAddon je uklonjen) — to sada
+    // radi RoadTripPlannerService (Google Routes/Places, Dio A), pozvan
+    // odvojeno u CloudItineraryGenerator nakon ovog poziva. carAddon() ostaje
+    // jer i dalje daje AI-ju kontekst za sadržaj dana (biraj POI-jeve "usput",
+    // parking, kratke pauze u Morning/Afternoon/Evening napomenama).
     text += originAddon(req);
     text += carAddon(req);
-    text += roadTripAddon(req);
 
     return text;
   }
@@ -274,141 +278,6 @@ ROAD TRIP RULES:
 - If a day is long, you may suggest an OVERNIGHT midway (optional) in the Evening note.
 - IMPORTANT: Keep the output schema EXACTLY the same as specified. Do NOT add extra fields.
 - To mark any driving tip line, prefix the line with the literal token "[CAR]" (no emoji). Example: "[CAR] Quick break near A1 rest area…"
-###''';
-  }
-
-  /// Kanonski prijevodi za road trip labele — GPT ih mora koristiti tačno
-  /// ovako, UI ih NE prevodi naknadno.
-  static const Map<String, Map<String, String>> _roadTripDict = {
-    'en': {
-      'Drive': 'Drive',
-      'Break': 'Break',
-      'Lunch': 'Lunch',
-      'Overnight': 'Overnight',
-      'Morning': 'Morning',
-      'Afternoon': 'Afternoon',
-      'Evening': 'Evening',
-      'towards': 'towards',
-    },
-    'bs-BA': {
-      'Drive': 'Vožnja',
-      'Break': 'Pauza',
-      'Lunch': 'Ručak',
-      'Overnight': 'Noćenje',
-      'Morning': 'Jutro',
-      'Afternoon': 'Popodne',
-      'Evening': 'Večer',
-      'towards': 'prema',
-    },
-    'de': {
-      'Drive': 'Fahrt',
-      'Break': 'Pause',
-      'Lunch': 'Mittagessen',
-      'Overnight': 'Übernachtung',
-      'Morning': 'Morgen',
-      'Afternoon': 'Nachmittag',
-      'Evening': 'Abend',
-      'towards': 'Richtung',
-    },
-    'fr': {
-      'Drive': 'Conduite',
-      'Break': 'Pause',
-      'Lunch': 'Déjeuner',
-      'Overnight': 'Nuitée',
-      'Morning': 'Matin',
-      'Afternoon': 'Après-midi',
-      'Evening': 'Soirée',
-      'towards': 'vers',
-    },
-    'es': {
-      'Drive': 'Conducción',
-      'Break': 'Pausa',
-      'Lunch': 'Almuerzo',
-      'Overnight': 'Pernocta',
-      'Morning': 'Mañana',
-      'Afternoon': 'Tarde',
-      'Evening': 'Noche',
-      'towards': 'hacia',
-    },
-    'it': {
-      'Drive': 'Guida',
-      'Break': 'Pausa',
-      'Lunch': 'Pranzo',
-      'Overnight': 'Pernottamento',
-      'Morning': 'Mattina',
-      'Afternoon': 'Pomeriggio',
-      'Evening': 'Sera',
-      'towards': 'verso',
-    },
-  };
-
-  static String roadTripAddon(ItineraryRequest req) {
-    if (!req.byCar) return '';
-
-    final langDict = _roadTripDict[req.languageCode] ?? _roadTripDict['en']!;
-    String t(String key) => langDict[key] ?? key;
-
-    return '''
-###
-ROAD TRIP MODE (MUST BE USED WHEN USER TRAVELS BY CAR)
-
-Add a top-level object named "roadTrip" BEFORE the main itinerary:
-
-{
-  "roadTrip": {
-    "origin": "<start>",
-    "destination": "<end>",
-    "totalDistanceKm": <number>,
-    "totalDurationMin": <number>,
-    "days": [
-      {
-        "dayNumber": 1,
-        "title": "Day 1",
-        "morning":    { "title": "...", "description": "...", "locationName": "...", "lat": <num|null>, "lon": <num|null> },
-        "afternoon":  { ... },
-        "evening":    { ... },
-        "segments": [
-          {
-            "kind": "drive | stop | overnight",
-            "minutes": <number>,
-            "placeName": "<string|null>",
-            "label": "<localized segment label>",
-            "address": "<string|null>",
-            "lat": <num|null>,
-            "lon": <num|null>,
-            "headingTo": "<string|null>"
-          }
-        ]
-      }
-    ]
-  }
-}
-
-=== STRICT LANGUAGE RULES (CRITICAL) ===
-Use ONLY these exact translated words:
-  Drive → "${t('Drive')}"
-  Break → "${t('Break')}"
-  Lunch → "${t('Lunch')}"
-  Overnight → "${t('Overnight')}"
-  Morning → "${t('Morning')}"
-  Afternoon → "${t('Afternoon')}"
-  Evening → "${t('Evening')}"
-  towards → "${t('towards')}"
-
-The UI WILL NOT TRANSLATE THESE.
-You MUST output them already translated.
-
-REQUIREMENTS:
-- Every segment MUST have a correct localized "label".
-- NEVER use English if languageCode ≠ "en".
-- Summary text (e.g., "250 km · 4.5 h total") MUST be in the selected language.
-- "headingTo" MUST also be localized ("${t('towards')} Berlin", etc.)
-
-ABSOLUTELY FORBIDDEN:
-- "Drive", "Break", "Lunch", "Overnight" in English unless lang=en.
-- "towards" in English unless lang=en.
-- Mixed languages.
-
 ###''';
   }
 

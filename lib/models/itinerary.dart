@@ -564,6 +564,8 @@ class ItineraryRequest {
     this.originLat,
     this.originLon,
     this.withKids = false,
+    this.maxDrivingHoursPerDay = 5.0,
+    this.breakEveryMinutes = 120,
   });
 
   final String country;
@@ -576,12 +578,18 @@ class ItineraryRequest {
   final TripPace tripPace;
   final List<String> interests;
 
-  /// Road trip način — kad je true, PromptBuilder dodaje car/roadTrip/origin addone.
+  /// Road trip način — kad je true, PromptBuilder dodaje car/origin addone,
+  /// a CloudItineraryGenerator poziva RoadTripPlannerService (Dio A/B).
   final bool byCar;
   final String? originName;
   final double? originLat;
   final double? originLon;
   final bool withKids;
+
+  /// Prosljeđeno u RoadTripPlannerService.plan() kad je byCar == true — vidi
+  /// istoimena polja u PlanConfigState (plan_options_view.dart).
+  final double maxDrivingHoursPerDay;
+  final int breakEveryMinutes;
 }
 
 /// Ekvivalent ItineraryResponse (glavni model).

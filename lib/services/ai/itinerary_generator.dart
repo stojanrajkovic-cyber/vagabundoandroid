@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:cloud_functions/cloud_functions.dart';
 
 import '../../models/itinerary.dart';
+import '../roadtrip/road_trip_planner_service.dart';
 import 'itinerary_json_parser.dart';
 import 'prompt_builder.dart';
 
@@ -98,7 +99,53 @@ class CloudItineraryGenerator implements ItineraryGenerator {
     );
 
     result = _normalizeInitial(result);
+
+    if (req.byCar) {
+      result = await _attachRealRoadTrip(result, req);
+    }
+
     return result;
+  }
+
+  /// Zamjenjuje AI-izmišljenu rutu (koju AI od Zadatka B3 uopšte više ne
+  /// vraća — roadTripAddon() je uklonjen iz prompta) stvarnim planom iz
+  /// RoadTripPlannerService (Google Routes/Places, vidi functions/src/planRoadTrip.ts).
+  /// Ako Cloud Function pukne (npr. mreža), `result` se vraća nepromijenjen
+  /// (roadTrip ostaje null) — generisanje CIJELOG plana se NE prekida.
+  Future<ItineraryResponse> _attachRealRoadTrip(
+    ItineraryResponse result,
+    ItineraryRequest req,
+  ) async {
+    final realRoadTrip = await RoadTripPlannerService.instance.plan(
+      originLat: req.originLat,
+      originLon: req.originLon,
+      originName: req.originName,
+      destLat: result.cityLat ?? req.cityLat ?? 0,
+      destLon: result.cityLon ?? req.cityLon ?? 0,
+      destName: '${result.city}, ${result.country}',
+      maxDrivingHoursPerDay: req.maxDrivingHoursPerDay,
+      breakEveryMinutes: req.breakEveryMinutes,
+      languageCode: req.languageCode,
+    );
+
+    if (realRoadTrip == null) return result;
+
+    return ItineraryResponse(
+      country: result.country,
+      city: result.city,
+      days: result.days,
+      cityLat: result.cityLat,
+      cityLon: result.cityLon,
+      roadTrip: realRoadTrip,
+      generatorModel: result.generatorModel,
+      promptSnapshot: result.promptSnapshot,
+      status: result.status,
+      completedAt: result.completedAt,
+      summary: result.summary,
+      pace: result.pace,
+      interests: result.interests,
+      withKids: result.withKids,
+    );
   }
 
   @override
