@@ -200,11 +200,27 @@ class _MainScreenState extends ConsumerState<MainScreen> {
           // origin ako postoji.
           originName = config.originQuery.trim();
         }
-        // Ako nema ni precizne lokacije ni ručnog unosa, originLat/Lon/Name
-        // ostaju null — PromptBuilder.originAddon() jednostavno izostavlja
-        // ORIGIN liniju (isto ponašanje kao iOS kad oba izostanu).
       } else if (config.originQuery.trim().isNotEmpty) {
         originName = config.originQuery.trim();
+      }
+
+      // FIX: planRoadTrip Cloud Function STROGO zahtijeva origin (za razliku
+      // od stare AI-prompt verzije koja je tiho izostavljala ORIGIN liniju
+      // ako ništa nije dostupno) — bez ove provjere, zahtjev bi otišao na
+      // server i tamo pao sa invalid-argument, trošeći poziv uzalud i
+      // ostavljajući korisnika bez ikakvog objašnjenja.
+      if (originLat == null && originLon == null && originName == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'We need a starting point for your road trip — enable precise '
+                'location, or enter a starting point manually.',
+              ),
+            ),
+          );
+        }
+        return;
       }
     }
 
