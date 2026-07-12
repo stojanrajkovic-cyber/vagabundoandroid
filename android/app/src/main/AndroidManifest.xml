@@ -20,6 +20,14 @@
         android:label="vagabundo"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+        <!-- Zvaničan Firebase mehanizam za isključivanje AD_ID prikupljanja
+             NA NIVOU SDK-a (ne samo manifest dozvole, koju smo već uklonili
+             iznad) — firebase-analytics interno ubacuje
+             play-services-ads-identifier biblioteku bez obzira na dozvolu,
+             ovaj flag govori SDK-u da je nikad ne koristi. -->
+        <meta-data
+            android:name="google_analytics_adid_collection_enabled"
+            android:value="false" />
         <activity
             android:name=".MainActivity"
             android:exported="true"
