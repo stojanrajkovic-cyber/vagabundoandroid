@@ -2,32 +2,10 @@
     xmlns:tools="http://schemas.android.com/tools">
 <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
 <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
-<!-- App NE koristi advertising ID (nema ad SDK, Analytics pozivi su
-     namjerno odgođeni za Fazu 8/9) — firebase_analytics paket automatski
-     ubacuje ovu dozvolu u merged manifest bez obzira na to, pa je
-     eksplicitno uklanjamo da "No" odgovor u Play Console Advertising ID
-     deklaraciji ostane tačan. -->
-<uses-permission android:name="com.google.android.gms.permission.AD_ID"
-    tools:node="remove"/>
-<!-- Isti razlog kao gore — novije Android 13+ "Privacy Sandbox" AdServices
-     dozvole, i njih firebase_analytics automatski ubacuje bez obzira na to
-     da li se stvarno koriste. -->
-<uses-permission android:name="android.permission.ACCESS_ADSERVICES_AD_ID"
-    tools:node="remove"/>
-<uses-permission android:name="android.permission.ACCESS_ADSERVICES_ATTRIBUTION"
-    tools:node="remove"/>
     <application
         android:label="vagabundo"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
-        <!-- Zvaničan Firebase mehanizam za isključivanje AD_ID prikupljanja
-             NA NIVOU SDK-a (ne samo manifest dozvole, koju smo već uklonili
-             iznad) — firebase-analytics interno ubacuje
-             play-services-ads-identifier biblioteku bez obzira na dozvolu,
-             ovaj flag govori SDK-u da je nikad ne koristi. -->
-        <meta-data
-            android:name="google_analytics_adid_collection_enabled"
-            android:value="false" />
         <activity
             android:name=".MainActivity"
             android:exported="true"
