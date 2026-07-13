@@ -181,7 +181,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final profile = ref.watch(userProfileProvider).asData?.value;
     final visits =
         ref.watch(userVisitsProvider).asData?.value ?? const <VisitedCity>[];
-    final monetizationAsync = ref.watch(userMonetizationProvider);
     final achievements = profile?.achievements ?? const <String>[];
 
     // Prikazani travel stats su DERIVED (svježe računati na refresh()), ne
@@ -308,12 +307,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     ),
                 ],
               ),
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            monetizationAsync.when(
-              data: (snapshot) => _FreePlanProgressCard(monetization: snapshot),
-              loading: () => const SizedBox.shrink(),
-              error: (error, stackTrace) => const SizedBox.shrink(),
             ),
             const SizedBox(height: AppSpacing.lg),
             SectionCard(
@@ -593,48 +586,6 @@ class _AchievementChip extends StatelessWidget {
           const SizedBox(width: AppSpacing.xs),
           Text(definition.title,
               style: AppTypography.chip.copyWith(color: context.accent)),
-        ],
-      ),
-    );
-  }
-}
-
-class _FreePlanProgressCard extends StatelessWidget {
-  const _FreePlanProgressCard({required this.monetization});
-
-  final MonetizationSnapshot monetization;
-
-  @override
-  Widget build(BuildContext context) {
-    final withinCycle = monetization.paidPlansCount % 10;
-    final progress = withinCycle / 10.0;
-    final remaining = 10 - withinCycle;
-
-    return SectionCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Free Plan Progress',
-              style:
-                  AppTypography.cardTitle.copyWith(color: context.textPrimary)),
-          const SizedBox(height: AppSpacing.md),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(AppSpacing.xs),
-            child: LinearProgressIndicator(
-              value: progress.clamp(0, 1),
-              minHeight: 8,
-              color: context.accent,
-              backgroundColor: context.cardStroke,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          Text('$remaining plans until next free',
-              style: AppTypography.bodySecondary
-                  .copyWith(color: context.textSecondary)),
-          const SizedBox(height: AppSpacing.xs),
-          Text('Free plans remaining: ${monetization.freePlansRemaining}',
-              style: AppTypography.bodySecondary
-                  .copyWith(color: context.textSecondary)),
         ],
       ),
     );
