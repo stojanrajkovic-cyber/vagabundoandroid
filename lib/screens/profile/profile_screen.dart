@@ -15,7 +15,6 @@ import '../../providers/auth_provider.dart';
 import '../../providers/firestore_provider.dart';
 import '../../providers/profile_controller.dart';
 import '../../services/connectivity/connectivity_service.dart';
-import '../../services/firestore/firestore_service.dart';
 import '../../services/profile/delete_account_service.dart';
 import '../../services/profile/profile_avatar_service.dart';
 import '../../widgets/profile/achievement_definitions.dart';
