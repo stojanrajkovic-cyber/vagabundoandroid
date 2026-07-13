@@ -5,8 +5,7 @@
 class AdConfig {
   AdConfig._();
 
-  static const String bannerAdUnitId =
-      'ca-app-pub-2444326151000515/2820489047';
+  static const String bannerAdUnitId = 'ca-app-pub-2444326151000515/2820489047';
   static const String interstitialAdUnitId =
-      'ca-app-pub-2444326151000515/7825403710§';
+      'ca-app-pub-2444326151000515/7825403710';
 }
