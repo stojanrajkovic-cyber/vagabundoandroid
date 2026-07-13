@@ -9,6 +9,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/explore_provider.dart';
 import '../../providers/location_provider.dart';
 import '../../utils/haptics.dart';
+import '../ads/ad_banner_widget.dart';
 import '../primary_button.dart';
 import 'explore_category_chips.dart';
 
@@ -104,6 +105,8 @@ class _ExploreControlsState extends ConsumerState<ExploreControls> {
                   );
                 },
         ),
+        const SizedBox(height: AppSpacing.sm),
+        const Center(child: AdBannerWidget()),
       ],
     );
   }

@@ -18,8 +18,10 @@ import '../../providers/auth_provider.dart';
 import '../../providers/location_provider.dart';
 import '../../providers/location_selection_provider.dart';
 import '../../providers/plan_config_provider.dart';
+import '../../services/ads/admob_service.dart';
 import '../../services/review/review_manager.dart';
 import '../../services/settings/sound_service.dart';
+import '../../widgets/ads/ad_banner_widget.dart';
 import '../../widgets/plan/app_hero_section.dart';
 import '../../widgets/plan/country_city_picker.dart';
 import '../../widgets/plan/interest_chips_grid.dart';
@@ -142,6 +144,8 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                           ? () => _handleGenerateTapped(contentLanguageCode)
                           : null,
                     ),
+                    const SizedBox(height: AppSpacing.sm),
+                    const Center(child: AdBannerWidget()),
                   ]),
                 ),
               ),
@@ -164,6 +168,8 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   }
 
   Future<void> _handleGenerateTapped(String languageCode) async {
+    unawaited(AdMobService.instance.maybeShowInterstitial());
+
     final isAuthenticated = ref.read(isAuthenticatedProvider);
     if (!isAuthenticated) {
       // TODO Faza 8: puni AuthGateView sa custom porukama (email verifikacija,

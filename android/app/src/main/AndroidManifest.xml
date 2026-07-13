@@ -57,6 +57,16 @@
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="${mapsApiKey}" />
+        <!-- TODO: zamijeni sa stvarnim AdMob App ID-jem kad korisnik napravi
+             AdMob nalog (AdMob dashboard → App settings). Ovo je TRENUTNO
+             Google-ov ZVANIČNI TEST App ID (Faza 8) — radi bez naloga i
+             prikazuje vidljivo označene test reklame. Za razliku od Maps API
+             ključa iznad, AdMob App ID NIJE tajna — javan je po dizajnu i
+             smije stajati direktno u manifestu, ne treba mu local.properties
+             tretman. -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-3940256099942544~3347511713"/>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

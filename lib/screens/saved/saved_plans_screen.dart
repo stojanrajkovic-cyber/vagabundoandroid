@@ -15,6 +15,7 @@ import '../../providers/saved_plans_provider.dart';
 import '../../services/connectivity/connectivity_service.dart';
 import '../../services/firestore/firestore_service.dart';
 import '../../services/review/review_manager.dart';
+import '../../widgets/ads/ad_banner_widget.dart';
 import '../../widgets/review/rate_app_dialog.dart';
 import '../../widgets/saved/offline_sync_banner.dart';
 import '../../widgets/saved/saved_plan_row.dart';
@@ -283,6 +284,8 @@ class _SavedPlansScreenState extends ConsumerState<SavedPlansScreen> {
                     ),
                   ),
               ],
+              const SizedBox(height: AppSpacing.sm),
+              const Center(child: AdBannerWidget()),
             ],
           ),
         );
@@ -325,6 +328,8 @@ class _SavedPlansScreenState extends ConsumerState<SavedPlansScreen> {
               onTap: () => _openOfflinePlan(plan),
             ),
           ),
+        const SizedBox(height: AppSpacing.sm),
+        const Center(child: AdBannerWidget()),
       ],
     );
   }

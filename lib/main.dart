@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 
 import 'app/app.dart';
+import 'services/ads/admob_service.dart';
 // Generira se pomoću `flutterfire configure` (vidi README_FIREBASE.md)
 // import 'firebase_options.dart';
 
@@ -19,6 +20,8 @@ Future<void> main() async {
   await Firebase.initializeApp(
       // options: DefaultFirebaseOptions.currentPlatform,
       );
+
+  await AdMobService.instance.initialize();
 
   runApp(const ProviderScope(child: VagabundoApp()));
 }

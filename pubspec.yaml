@@ -63,6 +63,9 @@ dependencies:
   # korišten ovdje (DeviceInfoPlugin().androidInfo) identičan u obje verzije.
   device_info_plus: ^10.1.2     # deviceModel/systemVersion za feedback
 
+  # Faza 8 — AdMob reklame (RevenueCat/IAP i dalje pauzirano)
+  google_mobile_ads: ^5.3.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
