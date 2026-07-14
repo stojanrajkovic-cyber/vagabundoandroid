@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
+import '../analytics/analytics_service.dart';
+
 /// Ekvivalent AuthSession.swift — tanki wrapper oko FirebaseAuth-a.
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -13,18 +15,25 @@ class AuthService {
   Future<UserCredential> signIn({
     required String email,
     required String password,
-  }) {
-    return _auth.signInWithEmailAndPassword(email: email, password: password);
+  }) async {
+    final credential = await _auth.signInWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+    AnalyticsService.instance.logLogin(method: 'email');
+    return credential;
   }
 
   Future<UserCredential> signUp({
     required String email,
     required String password,
-  }) {
-    return _auth.createUserWithEmailAndPassword(
+  }) async {
+    final credential = await _auth.createUserWithEmailAndPassword(
       email: email,
       password: password,
     );
+    AnalyticsService.instance.logSignUp(method: 'email');
+    return credential;
   }
 
   /// Ekvivalent "Continue with Google" — NOVI/alternativni način prijave
@@ -44,7 +53,13 @@ class AuthService {
       idToken: googleAuth.idToken,
       accessToken: googleAuth.accessToken,
     );
-    return _auth.signInWithCredential(credential);
+    final userCredential = await _auth.signInWithCredential(credential);
+    if (userCredential.additionalUserInfo?.isNewUser == true) {
+      AnalyticsService.instance.logSignUp(method: 'google');
+    } else {
+      AnalyticsService.instance.logLogin(method: 'google');
+    }
+    return userCredential;
   }
 
   Future<void> signOut() => _auth.signOut();

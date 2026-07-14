@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/auth_provider.dart';
 import '../screens/result/result_screen.dart';
+import '../services/analytics/analytics_service.dart';
 import '../services/firestore/firestore_service.dart';
 import '../services/settings/app_settings_store.dart';
 import '../services/share/incoming_link_service.dart';
@@ -69,6 +70,12 @@ class _VagabundoAppState extends ConsumerState<VagabundoApp> {
       }
     });
     _incomingLinkService.start();
+
+    // Jednom na app startup, sa trenutnom (možda još default, prije
+    // shared_preferences load-a) vrijednošću — svaka naredna promjena se
+    // loguje u AppSettingsController.setThemeMode().
+    AnalyticsService.instance
+        .setThemePreference(ref.read(appSettingsProvider).themeMode.name);
   }
 
   @override

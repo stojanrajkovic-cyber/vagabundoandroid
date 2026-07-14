@@ -1,5 +1,6 @@
 import '../../models/itinerary.dart';
 import '../../models/packing_guide.dart';
+import '../analytics/analytics_service.dart';
 import '../weather/weather_service.dart';
 import 'packing_recommendation_engine.dart';
 import 'seasonal_weather_context.dart';
@@ -40,6 +41,9 @@ class PackingGeneratorService {
     final String? advice = (daysUntilTrip <= 3 && context.likelyRain)
         ? 'Rain is likely during your trip — pack a rain jacket or umbrella.'
         : null;
+
+    AnalyticsService.instance
+        .logPackingGuideGenerated(days: itinerary.days.length);
 
     return PackingGuide(
       startDate: startDate,

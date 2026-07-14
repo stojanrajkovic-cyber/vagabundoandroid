@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:cloud_functions/cloud_functions.dart';
 
 import '../../models/itinerary.dart';
+import '../analytics/analytics_service.dart';
 import '../roadtrip/road_trip_planner_service.dart';
 import 'itinerary_json_parser.dart';
 import 'prompt_builder.dart';
@@ -129,6 +130,12 @@ class CloudItineraryGenerator implements ItineraryGenerator {
     );
 
     if (realRoadTrip == null) return result;
+
+    AnalyticsService.instance.logRoadTripGenerated(
+      origin: realRoadTrip.origin ?? '',
+      destination: realRoadTrip.destination ?? '',
+      totalDistanceKm: realRoadTrip.totalDistanceKm ?? 0,
+    );
 
     return ItineraryResponse(
       country: result.country,

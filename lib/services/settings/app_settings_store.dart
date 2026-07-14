@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../utils/haptics.dart';
+import '../analytics/analytics_service.dart';
 
 enum AppThemeMode { system, light, dark }
 
@@ -74,6 +75,7 @@ class AppSettingsController extends StateNotifier<AppSettingsState> {
   Future<void> setThemeMode(AppThemeMode mode) async {
     state = state.copyWith(themeMode: mode);
     (await SharedPreferences.getInstance()).setInt(_kTheme, mode.index);
+    AnalyticsService.instance.setThemePreference(mode.name);
   }
 }
 

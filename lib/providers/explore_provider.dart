@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/nearby_poi.dart';
 import '../models/poi_category.dart';
+import '../services/analytics/analytics_service.dart';
 import '../services/functions/functions_service.dart';
 import '../services/location/device_location_manager.dart';
 import 'auth_provider.dart';
@@ -90,6 +91,11 @@ class ExploreController extends StateNotifier<ExploreState> {
         lon: current.coordinate.longitude,
         radiusMeters: radiusMeters,
         includedTypes: googleTypes,
+      );
+      AnalyticsService.instance.logExploreSearchPerformed(
+        category: categoryKeys.isEmpty ? 'all' : categoryKeys.join(','),
+        radiusMeters: radiusMeters,
+        resultsCount: pois.length,
       );
       state = pois.isEmpty ? ExploreEmpty() : ExploreLoaded(pois);
       // } catch (_) {

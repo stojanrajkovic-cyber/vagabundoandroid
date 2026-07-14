@@ -9,6 +9,7 @@ import '../../models/itinerary.dart';
 import '../../services/affiliate/bike_rental_helper.dart';
 import '../../services/affiliate/discover_cars_service.dart';
 import '../../services/affiliate/stay22_service.dart';
+import '../../services/analytics/analytics_service.dart';
 import '../webview/in_app_webview_screen.dart';
 
 /// Ekvivalent tripSummaryCard iz ResultView.swift.
@@ -228,6 +229,9 @@ class _PlanToolsSheet extends StatelessWidget {
                           lon: itinerary.cityLon!,
                           languageCode: kAppLanguageCode,
                         );
+                        AnalyticsService.instance.logAccommodationBookingOpened(
+                          city: itinerary.city,
+                        );
                         Navigator.of(context, rootNavigator: true).push(
                           MaterialPageRoute(
                             builder: (_) => InAppWebViewScreen(
@@ -243,6 +247,7 @@ class _PlanToolsSheet extends StatelessWidget {
                 title: const Text('Rent a car'),
                 onTap: () {
                   Navigator.pop(context);
+                  AnalyticsService.instance.logRentACarOpened(city: itinerary.city);
                   Navigator.of(context, rootNavigator: true).push(
                     MaterialPageRoute(
                       builder: (_) => InAppWebViewScreen.html(

@@ -19,6 +19,7 @@ import '../../providers/location_provider.dart';
 import '../../providers/location_selection_provider.dart';
 import '../../providers/plan_config_provider.dart';
 import '../../services/ads/admob_service.dart';
+import '../../services/analytics/analytics_service.dart';
 import '../../services/review/review_manager.dart';
 import '../../services/settings/sound_service.dart';
 import '../../widgets/ads/ad_banner_widget.dart';
@@ -255,7 +256,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
 
     // TODO Faza 8: purchase gating (PurchaseManager.canGeneratePlan / kupovina
     // kredita) — za sada, svaki ulogovan korisnik može generisati bez provjere.
-    // TODO Faza 8/9: analytics/crashlytics pozivi (potpuno preskočeno ovdje).
+    // TODO Faza 8/9: crashlytics pozivi (potpuno preskočeno ovdje).
 
     setState(() => _isGenerating = true);
 
@@ -264,6 +265,14 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       final result = await generator.generate(request);
       if (!mounted) return;
       setState(() => _isGenerating = false);
+      AnalyticsService.instance.logPlanGenerated(
+        country: result.country,
+        city: result.city,
+        days: config.days,
+        tripPace: config.tripPace.name,
+        byCar: config.byCar,
+        withKids: config.withKids,
+      );
       ref.read(soundServiceProvider).playSuccess();
       context.push('/result', extra: result);
     } catch (e) {

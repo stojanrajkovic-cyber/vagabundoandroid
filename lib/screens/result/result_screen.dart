@@ -17,6 +17,7 @@ import '../../providers/ai_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/share_link_provider.dart';
 import '../../providers/weather_provider.dart';
+import '../../services/analytics/analytics_service.dart';
 import '../../services/firestore/firestore_service.dart';
 import '../../services/packing/packing_generator_service.dart';
 import '../../services/share/itinerary_pdf_generator.dart';
@@ -384,6 +385,7 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
         canShareLink: widget.planId != null,
         onShareLink: () {
           Navigator.of(sheetContext).pop();
+          AnalyticsService.instance.logPlanShared();
           _handleShareLink();
         },
         onManageLink: () {
@@ -392,10 +394,12 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
         },
         onShareAsText: () {
           Navigator.of(sheetContext).pop();
+          AnalyticsService.instance.logPlanShared();
           _handleShareAsText();
         },
         onShareAsPdf: () {
           Navigator.of(sheetContext).pop();
+          AnalyticsService.instance.logPlanShared();
           _handleShareAsPdf();
         },
       ),
