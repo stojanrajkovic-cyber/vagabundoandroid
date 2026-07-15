@@ -27,8 +27,8 @@ class AnalyticsService {
         'city': city,
         'days': days,
         'trip_pace': tripPace,
-        'by_car': byCar,
-        'with_kids': withKids,
+        'by_car': byCar ? 1 : 0,
+        'with_kids': withKids ? 1 : 0,
       });
     } catch (e) {
       // ignore: avoid_print
